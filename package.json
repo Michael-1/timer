@@ -1,0 +1,29 @@
+{
+  "name": "timer",
+  "description": "A simple, beautiful meeting timer",
+  "version": "0.1.0",
+  "license": "GPL-3.0",
+  "repository": "https://github.com/Michael-1/timer",
+  "scripts": {
+    "start": "webpack-dev-server"
+  },
+  "dependencies": {
+    "mithril": "^2.0.3"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.7.4",
+    "@babel/core": "^7.7.4",
+    "@babel/plugin-transform-react-jsx": "^7.7.4",
+    "@babel/preset-env": "^7.7.4",
+    "babel-loader": "^8.0.6",
+    "css-loader": "^3.2.0",
+    "fibers": "^4.0.2",
+    "node-sass": "^4.13.0",
+    "sass": "^1.23.7",
+    "sass-loader": "^8.0.0",
+    "style-loader": "^1.0.0",
+    "webpack": "^4.39.0",
+    "webpack-cli": "^3.3.6",
+    "webpack-dev-server": "^3.7.2"
+  }
+}

@@ -1,0 +1,27 @@
+#analog-clock {
+    svg {
+        height: 100%;
+        width: 100%;
+        display: block;
+        margin: auto;
+        .tick {
+            stroke: black;
+            stroke-width: .1;
+            &.major {
+                stroke-width: .5;
+            }
+        }
+        circle {
+            fill: black;
+        }
+        .timeLeft {
+            fill: red;
+        }
+        text {
+            text-anchor: middle;
+            dominant-baseline: middle;
+            font-size: 8px;
+            font-variant-numeric: proportional-nums;
+        }
+    }
+}
