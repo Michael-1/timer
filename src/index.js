@@ -1,6 +1,20 @@
-import m from 'mithril';
-import analogClock from './analog-clock';
+import m from "mithril";
+import AnalogClock from "./analog-clock";
+import DigitalClock from "./digital-clock";
+import Controls from "./controls";
 
-import './layout.scss';
+import "./layout.scss";
 
-m.mount(document.getElementById('analog-clock'), analogClock);
+const layout = {
+  view: function() {
+    return (
+      <div>
+        <AnalogClock />
+        <DigitalClock />
+        <Controls />
+      </div>
+    );
+  }
+};
+
+m.mount(document.body, layout);
