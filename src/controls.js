@@ -9,7 +9,6 @@ export default {
           ▶
         </button>
         <button disabled={model.state != STATE.PAUSED}>▮▮</button>
-        <button disabled={model.state != STATE.FINISHED}>↺</button>
       </div>
     );
   }

@@ -5,6 +5,8 @@ import "./analog-clock.scss";
 
 const clockRadius = 50;
 const majorTickSize = clockRadius / 5;
+const minorTickSize = majorTickSize - 1;
+const innerClockRadius = clockRadius - minorTickSize;
 const labelFontSize = 8;
 
 const totalTime = 60 * 1000;
@@ -23,7 +25,7 @@ export default {
           x1={clockRadius}
           y1={0}
           x2={clockRadius}
-          y2={majorTick ? majorTickSize : majorTickSize - 1}
+          y2={majorTick ? majorTickSize : minorTickSize}
           transform={`rotate(${rotation},50,50)`}
         />
       );
@@ -56,19 +58,50 @@ export default {
         viewBox={`0 0 ${clockRadius * 2} ${clockRadius * 2}`}
       >
         <path
+          class="originalTime"
+          d={`
+            M
+            ${clockRadius} 0
+            A
+            ${clockRadius} ${clockRadius} 
+            0 0 0
+            ${clockRadius -
+              clockRadius *
+                Math.sin((model.originalTime / totalTime) * 2 * Math.PI)}
+            ${clockRadius -
+              clockRadius *
+                Math.cos((model.originalTime / totalTime) * 2 * Math.PI)}
+            L
+            ${clockRadius -
+              innerClockRadius *
+                Math.sin((model.originalTime / totalTime) * 2 * Math.PI)}
+            ${clockRadius -
+              innerClockRadius *
+                Math.cos((model.originalTime / totalTime) * 2 * Math.PI)}
+            A
+            ${innerClockRadius} ${innerClockRadius} 
+              0 0 1
+              ${clockRadius} ${clockRadius - innerClockRadius}
+          `}
+        />
+        <path
           class="timeLeft"
           d={`
-                    M ${clockRadius} 0
-                    A ${clockRadius} ${clockRadius} 0 0 0
-                    ${clockRadius -
-                      clockRadius *
-                        Math.sin((model.timeLeft / totalTime) * 2 * Math.PI)}
-                    ${clockRadius -
-                      clockRadius *
-                        Math.cos((model.timeLeft / totalTime) * 2 * Math.PI)}
-                    L ${clockRadius} ${clockRadius}
-                    L ${clockRadius} 0
-                `}
+            M
+            ${clockRadius} 0
+            A
+            ${clockRadius} ${clockRadius} 0 0 0
+            ${clockRadius -
+              clockRadius *
+                Math.sin((model.timeLeft / totalTime) * 2 * Math.PI)}
+            ${clockRadius -
+              clockRadius *
+                Math.cos((model.timeLeft / totalTime) * 2 * Math.PI)}
+            L
+            ${clockRadius} ${clockRadius}
+            L
+            ${clockRadius} 0
+          `}
         />
         <circle cx={clockRadius} cy={clockRadius} r={1} />
         {ticks}

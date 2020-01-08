@@ -8,13 +8,14 @@ const STATE = {
 };
 
 const model = {
-  timeLeft: 10 * 1000,
+  timeLeft: null,
   originalTime: 10 * 1000,
   endTime: null,
   state: STATE.READY,
 
   start: function() {
-    model.endTime = Date.now() + model.timeLeft;
+    model.endTime = Date.now() + model.originalTime;
+    model.timeLeft = model.originalTime;
     model.state = STATE.RUNNING;
     const countdown = setInterval(function() {
       const currentTime = Date.now();
