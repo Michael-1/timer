@@ -3,8 +3,7 @@ var m = require("mithril");
 const STATE = {
   READY: "READY",
   RUNNING: "RUNNING",
-  PAUSED: "PAUSED",
-  FINISHED: "FINISHED"
+  PAUSED: "PAUSED"
 };
 
 const model = {
@@ -12,6 +11,10 @@ const model = {
   originalTime: 10 * 1000,
   endTime: null,
   state: STATE.READY,
+
+  setTime: function(time) {
+    model.originalTime = time;
+  },
 
   start: function() {
     model.timeLeft = model.originalTime;
@@ -34,7 +37,7 @@ const model = {
       model.timeLeft = model.endTime - Date.now();
       if (model.timeLeft <= 0) {
         clearInterval(model.countdown);
-        model.state = STATE.FINISHED;
+        model.state = STATE.READY;
       }
       m.redraw();
     }, 1000);
