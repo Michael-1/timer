@@ -14,18 +14,37 @@ const model = {
   state: STATE.READY,
 
   start: function() {
-    model.endTime = Date.now() + model.originalTime;
     model.timeLeft = model.originalTime;
+    model.run();
+  },
+
+  pause: function() {
+    clearInterval(model.countdown);
+    model.state = STATE.PAUSED;
+  },
+
+  resume: function() {
+    model.run();
+  },
+
+  run: function() {
     model.state = STATE.RUNNING;
-    const countdown = setInterval(function() {
+    model.endTime = Date.now() + model.timeLeft;
+    model.countdown = setInterval(function() {
       const currentTime = Date.now();
       model.timeLeft = model.endTime - currentTime;
       if (model.timeLeft <= 0) {
-        clearInterval(countdown);
+        clearInterval(model.countdown);
         model.state = STATE.FINISHED;
       }
       m.redraw();
     }, 1000);
+  },
+  countdown: null,
+
+  reset: function() {
+    model.state = STATE.READY;
+    model.timeLeft = null;
   }
 };
 

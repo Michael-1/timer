@@ -5,10 +5,18 @@ export default {
   view: function() {
     return (
       <div id="controls">
-        <button onclick={model.start} disabled={model.state != STATE.READY}>
+        <button
+          onclick={model.state === STATE.PAUSED ? model.resume : model.start}
+          disabled={model.state === STATE.RUNNING}
+        >
           ▶
         </button>
-        <button disabled={model.state != STATE.PAUSED}>▮▮</button>
+        <button onclick={model.pause} disabled={model.state !== STATE.RUNNING}>
+          ▮▮
+        </button>
+        <button onclick={model.reset} disabled={model.state !== STATE.PAUSED}>
+          ↺
+        </button>
       </div>
     );
   }
