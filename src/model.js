@@ -21,7 +21,6 @@ const model = {
   pause: function() {
     clearInterval(model.countdown);
     model.state = STATE.PAUSED;
-    model.timeLeft = model.endTime - Date.now();
   },
 
   resume: function() {

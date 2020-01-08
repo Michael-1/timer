@@ -76,25 +76,31 @@ export default {
             
           `}
           />
-          <path
-            class="timeLeft"
-            d={`
-            M 0 ${-clockRadius}
-            A ${clockRadius} ${clockRadius} 0 0 0 ${outerPositionLeft.x} ${
-              outerPositionLeft.y
-            }
-            ${
-              model.state === STATE.PAUSED
-                ? `
+          {model.state === STATE.RUNNING && (
+            <path
+              class="timeLeft"
+              d={`
+                M 0 ${-clockRadius}
+                A ${clockRadius} ${clockRadius} 0 0 0 ${outerPositionLeft.x} ${
+                outerPositionLeft.y
+              }
+                L 0 0
+              `}
+            />
+          )}
+          {model.state === STATE.PAUSED && (
+            <path
+              class="timeLeft"
+              d={`
+                  M 0 ${-clockRadius}
+                  A ${clockRadius} ${clockRadius} 0 0 0 ${
+                outerPositionLeft.x
+              } ${outerPositionLeft.y}
                 L ${innerPositionLeft.x} ${innerPositionLeft.y}
                 A ${innerClockRadius} ${innerClockRadius} 0 0 1 ${0} ${-innerClockRadius}
-                `
-                : `
-                L 0 0
-                `
-            }
-          `}
-          />
+              `}
+            />
+          )}
           <circle cx={0} cy={0} r={1} />
           {ticks}
         </g>
