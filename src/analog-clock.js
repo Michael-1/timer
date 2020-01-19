@@ -63,7 +63,7 @@ export default {
       }
       const textPosition = polarToCartesian(
         clockRadius - majorTickSize - labelFontSize / 2 - 3,
-        -(rotation / 180) * Math.PI
+        -rotation / 360
       );
       ticks.push(
         <text x={textPosition.x} y={textPosition.y}>
@@ -71,22 +71,6 @@ export default {
         </text>
       );
     }
-    const outerPositionOriginal = polarToCartesian(
-      clockRadius,
-      (model.originalTime / totalTime) * 2 * Math.PI
-    );
-    const innerPositionOriginal = polarToCartesian(
-      innerClockRadius,
-      (model.originalTime / totalTime) * 2 * Math.PI
-    );
-    const outerPositionLeft = polarToCartesian(
-      clockRadius,
-      (model.timeLeft / totalTime) * 2 * Math.PI
-    );
-    const innerPositionLeft = polarToCartesian(
-      innerClockRadius,
-      (model.timeLeft / totalTime) * 2 * Math.PI
-    );
     return (
       <svg
         id="analog-clock"
@@ -97,12 +81,8 @@ export default {
             class="originalTime"
             d={`
             M 0 ${-clockRadius}
-            A ${clockRadius} ${clockRadius} 0 0 0 ${outerPositionOriginal.x} ${
-              outerPositionOriginal.y
-            }
-            L ${innerPositionOriginal.x} ${innerPositionOriginal.y}
-            A ${innerClockRadius} ${innerClockRadius} 0 0 1 ${0} ${-innerClockRadius}
-            
+            ${drawArc(clockRadius, model.originalTime / totalTime)}
+            ${drawArc(innerClockRadius, model.originalTime / totalTime, true)}
           `}
           />
           {model.state === STATE.RUNNING && (
@@ -110,9 +90,7 @@ export default {
               class="timeLeft"
               d={`
                 M 0 ${-clockRadius}
-                A ${clockRadius} ${clockRadius} 0 0 0 ${outerPositionLeft.x} ${
-                outerPositionLeft.y
-              }
+                ${drawArc(clockRadius, model.timeLeft / totalTime)}
                 L 0 0
               `}
             />
@@ -122,11 +100,12 @@ export default {
               class="timeLeft"
               d={`
                   M 0 ${-clockRadius}
-                  A ${clockRadius} ${clockRadius} 0 0 0 ${
-                outerPositionLeft.x
-              } ${outerPositionLeft.y}
-                L ${innerPositionLeft.x} ${innerPositionLeft.y}
-                A ${innerClockRadius} ${innerClockRadius} 0 0 1 ${0} ${-innerClockRadius}
+                  ${drawArc(clockRadius, model.timeLeft / totalTime)}
+                  ${drawArc(
+                    innerClockRadius,
+                    -model.timeLeft / totalTime,
+                    true
+                  )}
               `}
             />
           )}
@@ -143,8 +122,18 @@ export default {
 };
 
 const polarToCartesian = function(radius, angle) {
+  const rad = angle * (2 * Math.PI);
   return {
-    x: -radius * Math.sin(angle),
-    y: -radius * Math.cos(angle)
+    x: -radius * Math.sin(rad),
+    y: -radius * Math.cos(rad)
   };
+};
+
+const drawArc = function(radius, angle, inner) {
+  const c = polarToCartesian(radius, angle);
+  return `
+      ${inner ? `L ${c.x} ${c.y}` : ""}
+      A ${radius} ${radius} 0 ${c.x < 0 ? 0 : 1} 
+      ${inner ? 1 : 0} ${inner ? 0 : c.x} ${inner ? -radius : c.y}
+    `;
 };
