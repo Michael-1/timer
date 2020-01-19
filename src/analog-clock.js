@@ -86,14 +86,21 @@ export default {
           `}
           />
           {model.state === STATE.RUNNING && (
-            <path
-              class="timeLeft"
-              d={`
-                M 0 ${-clockRadius}
-                ${drawArc(clockRadius, model.timeLeft / totalTime)}
-                L 0 0
-              `}
-            />
+            <g class="timeLeft">
+              <circle cx={0} cy={0} r={clockRadius} />
+              <circle
+                class="negative"
+                cx={0}
+                cy={0}
+                r={clockRadius / 2}
+                stroke-width={clockRadius}
+                stroke-dasharray={clockRadius * Math.PI}
+                stroke-dashoffset={
+                  (model.timeLeft / totalTime) * clockRadius * Math.PI
+                }
+                style={"animation-duration:" + model.timeLeft + "ms"}
+              />
+            </g>
           )}
           {model.state === STATE.PAUSED && (
             <path
@@ -101,15 +108,11 @@ export default {
               d={`
                   M 0 ${-clockRadius}
                   ${drawArc(clockRadius, model.timeLeft / totalTime)}
-                  ${drawArc(
-                    innerClockRadius,
-                    -model.timeLeft / totalTime,
-                    true
-                  )}
+                  ${drawArc(innerClockRadius, model.timeLeft / totalTime, true)}
               `}
             />
           )}
-          <circle cx={0} cy={0} r={1} />
+          <circle class="middleDot" cx={0} cy={0} r={1} />
           {ticks}
           {model.state === STATE.READY && interactiveSegments}
         </g>

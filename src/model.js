@@ -22,8 +22,9 @@ const model = {
   },
 
   pause: function() {
-    clearInterval(model.countdown);
     model.state = STATE.PAUSED;
+    model.timeLeft = model.endTime - Date.now();
+    clearTimeout(model.countdown);
   },
 
   resume: function() {
@@ -33,14 +34,11 @@ const model = {
   run: function() {
     model.state = STATE.RUNNING;
     model.endTime = Date.now() + model.timeLeft;
-    model.countdown = setInterval(function() {
-      model.timeLeft = model.endTime - Date.now();
-      if (model.timeLeft <= 0) {
-        clearInterval(model.countdown);
-        model.state = STATE.READY;
-      }
+    model.countdown = setTimeout(function() {
+      model.state = STATE.READY;
+      clearTimeout(model.countdown);
       m.redraw();
-    }, 1000);
+    }, model.timeLeft);
   },
   countdown: null,
 

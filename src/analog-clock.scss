@@ -10,14 +10,26 @@
       stroke-width: 0.5;
     }
   }
-  circle {
-    fill: black;
-  }
   .timeLeft {
     fill: #ff6161;
+    .negative {
+      fill: none;
+      stroke: white;
+      transform: rotate(-90deg);
+      animation-name: timeLeft;
+      animation-timing-function: linear;
+      @keyframes timeLeft {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+    }
   }
   .originalTime {
     fill: #ffcece;
+  }
+  .middleDot {
+    fill: black;
   }
   text {
     text-anchor: middle;
