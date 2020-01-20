@@ -84,14 +84,17 @@ export default {
         viewBox={`0 0 ${clockRadius * 2} ${clockRadius * 2}`}
       >
         <g transform={`translate(${clockRadius} ${clockRadius})`}>
-          <path
-            class="originalTime"
-            d={`
+          {model.state !== STATE.RUNNING && originalTime && (
+            <path
+              class="originalTime"
+              d={`
             M 0 ${-clockRadius}
             ${drawArc(clockRadius, originalTime / totalTime)}
             ${drawArc(innerClockRadius, originalTime / totalTime, true)}
           `}
-          />
+            />
+          )}
+          } }
           {model.state === STATE.RUNNING && (
             <g class="timeLeft">
               <circle cx={0} cy={0} r={clockRadius} />
