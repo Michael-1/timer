@@ -51,10 +51,15 @@ export default {
       if (!majorTick) {
         continue;
       }
-      const textPosition = polarToCartesian(
-        clockRadius - majorTickSize - labelFontSize / 2 - 3,
-        -rotation / 360
-      );
+      const textPosition = {
+        x:
+          -(clockRadius - majorTickSize - labelFontSize / 2 - 3) *
+          Math.sin((-rotation / 360) * (2 * Math.PI)),
+        y:
+          -(clockRadius - majorTickSize - labelFontSize / 2 - 2) *
+            Math.cos((-rotation / 360) * (2 * Math.PI)) +
+          1
+      };
       ticks.push(
         <text
           x={textPosition.x}
