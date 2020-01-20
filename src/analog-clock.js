@@ -59,10 +59,15 @@ export default {
         <text
           x={textPosition.x}
           y={textPosition.y}
-          onmouseenter={model.setIntermediateTime}
-          onmouseleave={model.resetIntermediateTime}
-          onclick={model.setTime}
           data-time={time}
+          {...(model.state === STATE.READY
+            ? {
+                class: "interactive",
+                onmouseenter: model.setIntermediateTime,
+                onmouseleave: model.resetIntermediateTime,
+                onclick: model.setTime
+              }
+            : {})}
         >
           {time / tickUnit}
         </text>
