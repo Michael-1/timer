@@ -7,6 +7,7 @@ const clockRadius = 50;
 const majorTickSize = clockRadius / 5;
 const minorTickSize = majorTickSize - 1;
 const innerClockRadius = clockRadius - minorTickSize;
+const outerClockRadius = clockRadius + 1;
 const labelFontSize = 8;
 
 const totalTime = 60 * 1000;
@@ -15,27 +16,15 @@ const majorTickFrequency = 5 * tickUnit;
 
 export default {
   view: function() {
+    const originalTime = model.intermediateOriginalTime || model.originalTime;
     const ticks = [];
-    const interactiveSegmentPrototypeOuter = polarToCartesian(
-      clockRadius,
-      (tickUnit / totalTime) * 2 * Math.PI
-    );
-    const interactiveSegmentPrototypeInner = polarToCartesian(
-      innerClockRadius,
-      (tickUnit / totalTime) * 2 * Math.PI
-    );
+    const interactiveSegments = [];
     const interactiveSegmentPrototype = `
       M 0 ${-clockRadius}
-      A ${clockRadius} ${clockRadius} 0 0 0 ${
-      interactiveSegmentPrototypeOuter.x
-    } ${interactiveSegmentPrototypeOuter.y}
-      L ${interactiveSegmentPrototypeInner.x} ${
-      interactiveSegmentPrototypeInner.y
-    }
-      A ${innerClockRadius} ${innerClockRadius} 0 0 1 ${0} ${-innerClockRadius}
+      ${drawArc(clockRadius, tickUnit / totalTime)}
+      ${drawArc(innerClockRadius, tickUnit / totalTime, true)}
     `;
-    const interactiveSegments = [];
-    for (var time = 0; time < totalTime; time += tickUnit) {
+    for (var time = tickUnit; time <= totalTime; time += tickUnit) {
       const rotation = -time * (360 / totalTime);
       const majorTick = !(time % majorTickFrequency);
       ticks.push(
@@ -52,9 +41,10 @@ export default {
         <path
           class="interactive-segment"
           d={interactiveSegmentPrototype}
-          transform={`rotate(${-(time - tickUnit / 2) *
-            (360 / totalTime)},0,0)`}
-          onmouseenter={this.setTime}
+          transform={`rotate(${-(time - tickUnit / 2) * (360 / totalTime)})`}
+          onmouseenter={model.setIntermediateTime}
+          onmouseleave={model.resetIntermediateTime}
+          onclick={model.setTime}
           data-time={time}
         />
       );
@@ -66,7 +56,14 @@ export default {
         -rotation / 360
       );
       ticks.push(
-        <text x={textPosition.x} y={textPosition.y}>
+        <text
+          x={textPosition.x}
+          y={textPosition.y}
+          onmouseenter={model.setIntermediateTime}
+          onmouseleave={model.resetIntermediateTime}
+          onclick={model.setTime}
+          data-time={time}
+        >
           {time / tickUnit}
         </text>
       );
@@ -81,8 +78,8 @@ export default {
             class="originalTime"
             d={`
             M 0 ${-clockRadius}
-            ${drawArc(clockRadius, model.originalTime / totalTime)}
-            ${drawArc(innerClockRadius, model.originalTime / totalTime, true)}
+            ${drawArc(clockRadius, originalTime / totalTime)}
+            ${drawArc(innerClockRadius, originalTime / totalTime, true)}
           `}
           />
           {model.state === STATE.RUNNING && (
@@ -92,11 +89,11 @@ export default {
                 class="negative"
                 cx={0}
                 cy={0}
-                r={clockRadius / 2}
-                stroke-width={clockRadius}
-                stroke-dasharray={clockRadius * Math.PI}
+                r={outerClockRadius / 2}
+                stroke-width={outerClockRadius}
+                stroke-dasharray={outerClockRadius * Math.PI}
                 stroke-dashoffset={
-                  (model.timeLeft / totalTime) * clockRadius * Math.PI
+                  (model.timeLeft / totalTime) * outerClockRadius * Math.PI
                 }
                 style={"animation-duration:" + model.timeLeft + "ms"}
               />
@@ -118,9 +115,6 @@ export default {
         </g>
       </svg>
     );
-  },
-  setTime: function() {
-    model.setTime(parseInt(this.dataset.time));
   }
 };
 

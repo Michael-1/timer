@@ -36,8 +36,12 @@
     dominant-baseline: middle;
     font-size: 8px;
     font-variant-numeric: proportional-nums;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
   .interactive-segment {
     fill: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
 }

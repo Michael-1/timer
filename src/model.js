@@ -7,13 +7,21 @@ const STATE = {
 };
 
 const model = {
-  timeLeft: null,
-  originalTime: 10 * 1000,
-  endTime: null,
   state: STATE.READY,
 
-  setTime: function(time) {
-    model.originalTime = time;
+  setTime: function() {
+    model.originalTime = parseInt(this.dataset.time);
+    model.intermediateOriginalTime = null;
+  },
+
+  setIntermediateTime: function() {
+    model.intermediateOriginalTime = parseInt(this.dataset.time);
+    console.debug("Set: " + this.dataset.time);
+  },
+
+  resetIntermediateTime: function() {
+    model.intermediateOriginalTime = null;
+    console.debug("Unset: " + this.dataset.time);
   },
 
   start: function() {
