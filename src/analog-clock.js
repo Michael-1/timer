@@ -85,18 +85,7 @@ export default {
       >
         <g transform={`translate(${clockRadius} ${clockRadius})`}>
           {model.state !== STATE.RUNNING && originalTime && (
-            <path
-              class="originalTime"
-              d={`
-            M 0 ${-clockRadius}
-            ${drawArc(clockRadius, originalTime / totalTime)}
-            ${drawArc(innerClockRadius, originalTime / totalTime, true)}
-          `}
-            />
-          )}
-          } }
-          {model.state === STATE.RUNNING && (
-            <g class="timeLeft">
+            <g class="originalTime">
               <circle cx={0} cy={0} r={clockRadius} />
               <circle
                 class="negative"
@@ -106,21 +95,30 @@ export default {
                 stroke-width={outerClockRadius}
                 stroke-dasharray={outerClockRadius * Math.PI}
                 stroke-dashoffset={
-                  (model.timeLeft / totalTime) * outerClockRadius * Math.PI
+                  (originalTime / totalTime) * outerClockRadius * Math.PI
                 }
-                style={"animation-duration:" + model.timeLeft + "ms"}
               />
             </g>
           )}
-          {model.state === STATE.PAUSED && (
-            <path
-              class="timeLeft"
-              d={`
-                  M 0 ${-clockRadius}
-                  ${drawArc(clockRadius, model.timeLeft / totalTime)}
-                  ${drawArc(innerClockRadius, model.timeLeft / totalTime, true)}
-              `}
-            />
+          {model.state !== STATE.READY && (
+            <g class="timeLeft">
+              <circle cx={0} cy={0} r={clockRadius} />
+              <circle
+                class={`negative ${model.state == STATE.PAUSED && "paused"}`}
+                cx={0}
+                cy={0}
+                r={outerClockRadius / 2}
+                stroke-width={outerClockRadius}
+                stroke-dasharray={outerClockRadius * Math.PI}
+                stroke-dashoffset={
+                  (model.timeLeft / totalTime) * outerClockRadius * Math.PI
+                }
+                style={`animation-duration: ${model.timeLeft}ms;`}
+              />
+            </g>
+          )}
+          {model.state !== STATE.RUNNING && (
+            <circle class="inner-negative" cx={0} cy={0} r={innerClockRadius} />
           )}
           <circle class="middleDot" cx={0} cy={0} r={1} />
           {ticks}
