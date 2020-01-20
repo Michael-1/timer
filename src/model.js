@@ -16,12 +16,10 @@ const model = {
 
   setIntermediateTime: function() {
     model.intermediateOriginalTime = parseInt(this.dataset.time);
-    console.debug("Set: " + this.dataset.time);
   },
 
   resetIntermediateTime: function() {
     model.intermediateOriginalTime = null;
-    console.debug("Unset: " + this.dataset.time);
   },
 
   start: function() {
