@@ -1,6 +1,8 @@
 import m from "mithril";
 import { model, STATE } from "./model";
 
+import "./controls.scss";
+
 export default {
   view: function() {
     return (

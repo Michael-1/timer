@@ -5,13 +5,32 @@ import Controls from "./controls";
 
 import "./layout.scss";
 
+const LAYOUT = {
+  HIGH: "high",
+  WIDE: "wide",
+  SQUARE: "square"
+};
+
+window.onresize = function(event) {
+  m.redraw();
+};
+
 const layout = {
   view: function() {
+    const doc = document.documentElement;
+    let layout = LAYOUT.SQUARE;
+    if (doc.clientWidth * 3 > doc.clientHeight * 4) layout = LAYOUT.WIDE;
+    if (doc.clientWidth * 4 < doc.clientHeight * 3) layout = LAYOUT.HIGH;
     return (
-      <div>
+      <div
+        class={`layout layout--${layout}`}
+        style={`height:${doc.clientHeight}px`}
+      >
         <AnalogClock />
-        <DigitalClock />
-        <Controls />
+        <div class="sideBlock">
+          <DigitalClock />
+          <Controls />
+        </div>
       </div>
     );
   }

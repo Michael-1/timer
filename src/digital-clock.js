@@ -1,5 +1,5 @@
-import m from "mithril";
-import model from "./model";
+const m = require("mithril");
+const { model, STATE } = require("./model");
 
 import "./digital-clock.scss";
 
