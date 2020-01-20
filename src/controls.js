@@ -7,7 +7,7 @@ export default {
       <div id="controls">
         <button
           onclick={model.state === STATE.PAUSED ? model.resume : model.start}
-          disabled={model.state === STATE.RUNNING}
+          disabled={model.state === STATE.RUNNING || !model.originalTime}
         >
           ▶
         </button>
