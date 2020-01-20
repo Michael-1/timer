@@ -16,7 +16,7 @@ export default {
         <button onclick={model.pause} disabled={model.state !== STATE.RUNNING}>
           ▮▮
         </button>
-        <button onclick={model.reset} disabled={model.state !== STATE.PAUSED}>
+        <button onclick={model.reset} disabled={model.state === STATE.READY}>
           ↺
         </button>
       </div>
