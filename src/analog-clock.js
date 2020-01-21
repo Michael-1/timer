@@ -10,8 +10,8 @@ const innerClockRadius = clockRadius - minorTickSize;
 const outerClockRadius = clockRadius + 1;
 const labelFontSize = 8;
 
-const totalTime = 60 * 1000;
-const tickUnit = 1000;
+const totalTime = 60 * 60 * 1000;
+const tickUnit = 60 * 1000;
 const majorTickFrequency = 5 * tickUnit;
 
 export default {
