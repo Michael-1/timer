@@ -89,20 +89,14 @@ const clock = {
         viewBox={`0 0 ${clockRadius * 2} ${clockRadius * 2}`}
       >
         <g transform={`translate(${clockRadius} ${clockRadius})`}>
-          <g class="originalTime">
-            <circle cx={0} cy={0} r={clockRadius} />
-            <circle
-              class="negative"
-              cx={0}
-              cy={0}
-              r={outerClockRadius / 2}
-              stroke-width={outerClockRadius}
-              stroke-dasharray={outerClockRadius * Math.PI}
-              stroke-dashoffset={
-                (originalTime / totalTime) * outerClockRadius * Math.PI
-              }
-            />
-          </g>
+          <path
+            class="originalTime"
+            d={`
+            M 0 ${-clockRadius}
+            ${drawArc(clockRadius, originalTime / totalTime)}
+            ${drawArc(innerClockRadius, originalTime / totalTime, true)}
+          `}
+          />
           <g class="timeLeft">
             <circle cx={0} cy={0} r={clockRadius} />
             <circle
