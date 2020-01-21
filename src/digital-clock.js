@@ -11,8 +11,8 @@ const input = {
   view: function() {
     let time =
       model.state === STATE.READY ? model.originalTime : model.timeLeft;
-    const seconds = Math.round(time / 1000) % 60;
-    const minutes = (Math.round(time / 1000 - seconds) / 60) % 60;
+    const seconds = Math.floor(time / 1000) % 60;
+    const minutes = (Math.floor(time / 1000 - seconds) / 60) % 60;
     const hours = Math.floor(time / (1000 * 60 * 60));
     let text, ghost;
     if (input.userInput === null) {
@@ -54,7 +54,7 @@ const input = {
     if (time < 0) {
       text = "";
     }
-    const textWidth = time < 10 * 60000 ? 4.3 : time < 60 * 60000 ? 5.3 : 6.8;
+    const textWidth = time < 10 * 60000 ? 4.4 : time < 60 * 60000 ? 5.4 : 6.8;
     const doc = document.documentElement;
     return (
       <div id="digital-clock">

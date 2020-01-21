@@ -16,12 +16,11 @@ const majorTickFrequency = 5 * tickUnit;
 
 const clock = {
   view: function() {
-    const originalTime =
+    let originalTime =
       model.intermediateOriginalTime || model.originalTime || 0;
-    const timeLeft =
-      model.state === STATE.PAUSED
-        ? model.timeLeft
-        : model.endTime - Date.now() || 0;
+    if (originalTime === totalTime) originalTime--;
+    let timeLeft = model.timeLeft || 0;
+    if (timeLeft === totalTime) timeLeft--;
     const ticks = [];
     const interactiveSegments = [];
     const interactiveSegmentPrototype = `
@@ -97,27 +96,15 @@ const clock = {
             ${drawArc(innerClockRadius, originalTime / totalTime, true)}
           `}
           />
-          <g class="timeLeft">
-            <circle cx={0} cy={0} r={clockRadius} />
-            <circle
-              class={`negative ${model.state == STATE.PAUSED && "paused"}`}
-              cx={0}
-              cy={0}
-              r={outerClockRadius / 2}
-              stroke-width={outerClockRadius}
-              stroke-dasharray={outerClockRadius * Math.PI}
-              stroke-dashoffset={
-                (timeLeft / totalTime) * outerClockRadius * Math.PI
-              }
-              style={`animation-duration: ${timeLeft}ms;`}
-            />
-          </g>
-          <circle
-            class="inner-negative"
-            cx={0}
-            cy={0}
-            r={model.state === STATE.RUNNING ? 0 : innerClockRadius}
-          >
+          <path
+            class="timeLeft"
+            d={`
+              M 0 ${-clockRadius}
+              ${drawArc(clockRadius, timeLeft / totalTime)}
+              L 0 0
+            `}
+          />
+          <circle class="inner-negative" cx={0} cy={0} r={innerClockRadius}>
             <animate
               class="animation--running-paused animation--running-ready"
               begin="indefinite"
@@ -127,6 +114,7 @@ const clock = {
               keySplines="0 0 0 1"
               attributeName="r"
               values={"0;" + innerClockRadius}
+              fill="freeze"
             />
             <animate
               class="animation--ready-running animation--paused-running"
@@ -138,9 +126,9 @@ const clock = {
               attributeName="r"
               to="0"
               values={innerClockRadius + ";0"}
+              fill="freeze"
             />
           </circle>
-          }
           <circle class="middleDot" cx={0} cy={0} r={1} />
           {ticks}
           {model.state === STATE.READY && interactiveSegments}

@@ -9,6 +9,7 @@ export default {
       <div id="controls">
         <button
           id="run"
+          title="Run"
           onclick={model.state === STATE.PAUSED ? model.resume : model.start}
           disabled={
             model.state === STATE.RUNNING ||
@@ -21,6 +22,7 @@ export default {
         </button>
         <button
           id="pause"
+          title="Pause"
           onclick={model.pause}
           disabled={model.state !== STATE.RUNNING}
         >
@@ -30,6 +32,7 @@ export default {
         </button>
         <button
           id="reset"
+          title="Reset"
           onclick={model.reset}
           disabled={model.state === STATE.READY}
         >

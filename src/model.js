@@ -27,7 +27,7 @@ const model = {
     model.timeLeft = model.endTime - Date.now();
     clearTimeout(model.timeoutEnd);
     clearInterval(model.countdown);
-    model.animateElements(oldState, model.state);
+    model.animateElements(oldState);
   },
 
   resume: function() {
@@ -37,7 +37,8 @@ const model = {
   run: function() {
     const oldState = model.state;
     model.state = STATE.RUNNING;
-    model.endTime = Date.now() + model.timeLeft;
+    model.endTime = Date.now() + --model.timeLeft;
+    m.redraw();
     model.countdown = setInterval(function() {
       model.timeLeft = model.endTime - Date.now();
       m.redraw();
@@ -46,16 +47,15 @@ const model = {
       model.reset();
       m.redraw();
     }, model.timeLeft);
-    model.animateElements(oldState, model.state);
+    model.animateElements(oldState);
   },
 
   reset: function() {
     const oldState = model.state;
     model.state = STATE.READY;
-    model.timeLeft = null;
     clearTimeout(model.timeoutEnd);
     clearInterval(model.countdown);
-    model.animateElements(oldState, model.state);
+    model.animateElements(oldState);
   },
 
   clickOnDisabled: function() {
@@ -65,9 +65,9 @@ const model = {
     }, 500);
   },
 
-  animateElements(oldState, newState) {
+  animateElements(oldState) {
     for (let el of document.getElementsByClassName(
-      `animation--${oldState}-${newState}`
+      `animation--${oldState}-${model.state}`
     ))
       el.beginElement();
   }
