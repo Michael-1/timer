@@ -36,6 +36,7 @@
     .layout--square & {
       border-color: lightgray;
     }
+
     .state--running &#run,
     .state--paused &#pause {
       opacity: 1;
@@ -46,6 +47,10 @@
         animation: $animation-blink;
       }
     }
+    .click-on-disabled-flash &#reset {
+      animation: $animation-click-on-disabled;
+    }
+
     &::-moz-focus-inner {
       border: 0;
     }

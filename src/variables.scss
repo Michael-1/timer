@@ -15,3 +15,13 @@ $animation-blink: blink 1s ease-out infinite alternate;
     opacity: 0.2;
   }
 }
+
+$animation-click-on-disabled: flash 200ms 2 alternate;
+@keyframes flash {
+  from {
+    background-color: white;
+  }
+  to {
+    background-color: $color-primary-light;
+  }
+}

@@ -127,6 +127,15 @@ const clock = {
           <circle class="middleDot" cx={0} cy={0} r={1} />
           {ticks}
           {model.state === STATE.READY && interactiveSegments}
+          {model.state !== STATE.READY && (
+            <circle
+              class="disabled-click-overlay"
+              cx={0}
+              cy={0}
+              r={clockRadius}
+              onclick={model.clickOnDisabled}
+            />
+          )}
         </g>
       </svg>
     );

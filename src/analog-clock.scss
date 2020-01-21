@@ -60,4 +60,8 @@
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
+
+  .disabled-click-overlay {
+    fill: transparent;
+  }
 }

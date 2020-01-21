@@ -16,7 +16,7 @@ export default {
           }
         >
           <svg class="icon" viewBox="0 0 32 32">
-            <path d="M8 3l21 11-21 11z" />
+            <path d="M6 4l20 12-20 12z" />
           </svg>
         </button>
         <button
@@ -25,11 +25,11 @@ export default {
           disabled={model.state !== STATE.RUNNING}
         >
           <svg class="icon" viewBox="0 0 32 32">
-            <path d="M4 3h10v23h-10zM18 3h10v23h-10z" />
+            <path d="M4 4h10v24h-10zM18 4h10v24h-10z" />
           </svg>
         </button>
         <button
-          id="revert"
+          id="reset"
           onclick={model.reset}
           disabled={model.state === STATE.READY}
         >

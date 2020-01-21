@@ -51,11 +51,18 @@ const input = {
         }
       }
     }
+    if (time < 0) {
+      text = "";
+    }
     const textWidth = time < 10 * 60000 ? 4.3 : time < 60 * 60000 ? 5.3 : 6.8;
     const doc = document.documentElement;
     return (
       <div id="digital-clock">
-        <form style={model.state !== STATE.READY ? `width:${textWidth}ch` : ""}>
+        <form
+          {...(model.state !== STATE.READY
+            ? { style: `width:${textWidth}ch`, onclick: model.clickOnDisabled }
+            : {})}
+        >
           <input
             list="presets"
             value={text}

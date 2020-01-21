@@ -24,7 +24,9 @@ const layout = {
     if (doc.clientWidth * 4 < doc.clientHeight * 3) layout = LAYOUT.HIGH;
     return (
       <div
-        class={`layout layout--${layout} state--${model.state}`}
+        class={`layout layout--${layout} state--${model.state} ${
+          model.highlightOnDisabledClick ? "click-on-disabled-flash" : ""
+        }`}
         style={`height:${doc.clientHeight}px`}
       >
         <AnalogClock />

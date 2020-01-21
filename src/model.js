@@ -8,6 +8,11 @@ const STATE = {
 
 const model = {
   state: STATE.READY,
+  highlightOnDisabledClick: false,
+  originalTime: null,
+  intermediateOriginalTime: null,
+  timeLeft: null,
+  endTime: null,
   timeoutEnd: null,
   countdown: null,
 
@@ -45,6 +50,13 @@ const model = {
     model.timeLeft = null;
     clearTimeout(model.timeoutEnd);
     clearInterval(model.countdown);
+  },
+
+  clickOnDisabled: function() {
+    model.highlightOnDisabledClick = true;
+    setTimeout(function() {
+      model.highlightOnDisabledClick = false;
+    }, 500);
   }
 };
 
