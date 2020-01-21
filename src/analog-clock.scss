@@ -18,9 +18,9 @@
   .timeLeft {
     fill: $color-primary;
     opacity: 1;
-    transition: opacity 500ms;
+    transition: opacity 0s 500ms;
     .state--ready & {
-      opacity: 0;
+      transition: opacity 0s;
     }
   }
   .originalTime {

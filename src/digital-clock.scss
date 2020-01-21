@@ -7,7 +7,7 @@
     position: relative;
     white-space: nowrap;
     width: 6.8ch;
-    transition: width 1s ease-out;
+    transition: width 1000ms;
     min-height: 1.4em;
     font-weight: 600;
   }
@@ -20,7 +20,7 @@
     z-index: 1;
     border-radius: $border-radius;
     border-color: lightgrey;
-    transition: border-color 1s;
+    transition: border-color 500ms;
     -webkit-appearance: none;
     position: absolute;
     width: 100%;
@@ -46,10 +46,10 @@
     color: lightgrey;
     border-color: transparent;
     cursor: default;
-    transition: opacity 500ms;
-    transition-delay: 1s;
+    transition: opacity 500ms 1000ms;
     .invisible {
-      visibility: hidden;
+      opacity: 0;
+      transition-delay: 0s;
     }
   }
 

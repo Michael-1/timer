@@ -103,7 +103,26 @@ const clock = {
               ${drawArc(clockRadius, timeLeft / totalTime)}
               L 0 0
             `}
-          />
+          >
+            <animate
+              class="animation--running-ready animation--paused-ready"
+              begin="indefinite"
+              dur="500ms"
+              attributeName="fill"
+              from="#ff6161"
+              to="#ffcece"
+              fill="freeze"
+            />
+            <animate
+              class="animation--ready-running"
+              begin="indefinite"
+              dur="500ms"
+              attributeName="fill"
+              to="#ff6161"
+              from="#ffcece"
+              fill="freeze"
+            />
+          </path>
           <circle class="inner-negative" cx={0} cy={0} r={innerClockRadius}>
             <animate
               class="animation--running-paused animation--running-ready"
@@ -128,6 +147,15 @@ const clock = {
               values={innerClockRadius + ";0"}
               fill="freeze"
             />
+          </circle>
+          <circle
+            class="end-animation"
+            cx={0}
+            cy={0}
+            r={clockRadius / 2}
+            style="display:none"
+          >
+            <animate class="animation--end" />
           </circle>
           <circle class="middleDot" cx={0} cy={0} r={1} />
           {ticks}

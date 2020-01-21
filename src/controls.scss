@@ -1,10 +1,10 @@
 @import "variables";
 
 #controls {
-  display: flex;
-  justify-content: center;
-
   button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
     font-size: 3vmin;
     line-height: 100%;
     width: 2em;
@@ -31,6 +31,9 @@
       }
       &:active {
         box-shadow: $highlight-press;
+        path {
+          fill: $color-primary;
+        }
       }
     }
     .layout--square & {
@@ -39,7 +42,6 @@
 
     .state--running &#run,
     .state--paused &#pause {
-      opacity: 1;
       path {
         fill: $color-primary;
       }
@@ -58,7 +60,6 @@
     .icon {
       height: 50%;
       width: 50%;
-      vertical-align: middle;
     }
   }
 }

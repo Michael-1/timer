@@ -17,16 +17,12 @@ const input = {
     let text, ghost;
     if (input.userInput === null) {
       const textHours = hours ? hours : "";
-      const textMinutes = hours
-        ? ":" + String(minutes).padStart(2, "0")
-        : minutes
-        ? minutes
+      const textMinutes = time
+        ? hours
+          ? ":" + String(minutes).padStart(2, "0")
+          : minutes
         : "";
-      const textSeconds = time
-        ? time < 60000
-          ? seconds
-          : ":" + String(seconds).padStart(2, 0)
-        : "";
+      const textSeconds = time ? ":" + String(seconds).padStart(2, 0) : "";
       text = textHours + textMinutes + textSeconds;
       const ghostHours = hours ? "" : "0:";
       const ghostMinutes =
