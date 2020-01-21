@@ -9,19 +9,6 @@ const STATE = {
 const model = {
   state: STATE.READY,
 
-  setTime: function() {
-    model.originalTime = parseInt(this.dataset.time);
-    model.intermediateOriginalTime = null;
-  },
-
-  setIntermediateTime: function() {
-    model.intermediateOriginalTime = parseInt(this.dataset.time);
-  },
-
-  resetIntermediateTime: function() {
-    model.intermediateOriginalTime = null;
-  },
-
   start: function() {
     model.timeLeft = model.originalTime;
     model.run();

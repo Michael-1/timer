@@ -14,7 +14,7 @@ const totalTime = 60 * 60 * 1000;
 const tickUnit = 60 * 1000;
 const majorTickFrequency = 5 * tickUnit;
 
-export default {
+const clock = {
   view: function() {
     const originalTime = model.intermediateOriginalTime || model.originalTime;
     const ticks = [];
@@ -42,9 +42,9 @@ export default {
           class="interactive-segment"
           d={interactiveSegmentPrototype}
           transform={`rotate(${-(time - tickUnit / 2) * (360 / totalTime)})`}
-          onmouseenter={model.setIntermediateTime}
-          onmouseleave={model.resetIntermediateTime}
-          onclick={model.setTime}
+          onmouseenter={clock.setIntermediateTime}
+          onmouseleave={clock.resetIntermediateTime}
+          onclick={clock.setTime}
           data-time={time}
         />
       );
@@ -68,9 +68,9 @@ export default {
           {...(model.state === STATE.READY
             ? {
                 class: "interactive",
-                onmouseenter: model.setIntermediateTime,
-                onmouseleave: model.resetIntermediateTime,
-                onclick: model.setTime
+                onmouseenter: clock.setIntermediateTime,
+                onmouseleave: clock.resetIntermediateTime,
+                onclick: clock.setTime
               }
             : {})}
         >
@@ -126,6 +126,19 @@ export default {
         </g>
       </svg>
     );
+  },
+
+  setTime: function() {
+    model.originalTime = parseInt(this.dataset.time);
+    clock.resetIntermediateTime();
+  },
+
+  setIntermediateTime: function() {
+    model.intermediateOriginalTime = parseInt(this.dataset.time);
+  },
+
+  resetIntermediateTime: function() {
+    model.intermediateOriginalTime = null;
   }
 };
 
@@ -145,3 +158,5 @@ const drawArc = function(radius, angle, inner) {
       ${inner ? 1 : 0} ${inner ? 0 : c.x} ${inner ? -radius : c.y}
     `;
 };
+
+export default clock;

@@ -11,18 +11,20 @@ body {
 
 .layout {
   display: flex;
+  justify-content: center;
   align-items: stretch;
 
-  > * {
+  #analog-clock,
+  #digital-clock,
+  #controls {
     padding: 5vmin;
-    flex-grow: 1;
   }
 
   .sideBlock {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-evenly;
+    justify-content: center;
   }
 
   &--high {
@@ -31,11 +33,20 @@ body {
 
   &--square {
     .sideBlock {
-      position: absolute;
-      top: 50%;
-      left: 0;
-      right: 0;
-      margin: auto;
+      display: contents;
+      > * {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        left: 50%;
+        padding: 0;
+        margin: auto;
+      }
+      #digital-clock {
+        top: 50%;
+      }
+      #controls {
+        top: 60%;
+      }
     }
   }
 }

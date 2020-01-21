@@ -1,3 +1,52 @@
 #digital-clock {
-  white-space: nowrap;
+  form {
+    position: relative;
+    white-space: nowrap;
+    background-color: white;
+    width: 5em;
+    min-height: 1.4em;
+  }
+  .colon-prefix::before {
+    content: ":";
+    position: absolute;
+  }
+
+  input {
+    z-index: 1;
+    border-radius: 0.5em;
+    border-color: lightgrey;
+    position: absolute;
+    width: 100%;
+    background-color: transparent;
+    font-size: inherit;
+    font-family: inherit;
+    color: inherit;
+    text-align: right;
+
+    &::-webkit-calendar-picker-indicator {
+      display: none;
+    }
+  }
+
+  .ghost {
+    color: lightgrey;
+    border-color: transparent;
+    .invisible {
+      visibility: hidden;
+    }
+  }
+
+  input,
+  .ghost {
+    vertical-align: top;
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0 0.5em;
+    margin: 0;
+    border-width: 1px;
+    border-style: solid;
+    line-height: 1.4em;
+    font-variant-numeric: tabular-nums;
+  }
 }
