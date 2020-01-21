@@ -16,11 +16,12 @@ const majorTickFrequency = 5 * tickUnit;
 
 const clock = {
   view: function() {
-    const originalTime = model.intermediateOriginalTime || model.originalTime;
+    const originalTime =
+      model.intermediateOriginalTime || model.originalTime || 0;
     const timeLeft =
       model.state === STATE.PAUSED
         ? model.timeLeft
-        : model.endTime - Date.now();
+        : model.endTime - Date.now() || 0;
     const ticks = [];
     const interactiveSegments = [];
     const interactiveSegmentPrototype = `
@@ -88,42 +89,64 @@ const clock = {
         viewBox={`0 0 ${clockRadius * 2} ${clockRadius * 2}`}
       >
         <g transform={`translate(${clockRadius} ${clockRadius})`}>
-          {model.state !== STATE.RUNNING && originalTime && (
-            <g class="originalTime">
-              <circle cx={0} cy={0} r={clockRadius} />
-              <circle
-                class="negative"
-                cx={0}
-                cy={0}
-                r={outerClockRadius / 2}
-                stroke-width={outerClockRadius}
-                stroke-dasharray={outerClockRadius * Math.PI}
-                stroke-dashoffset={
-                  (originalTime / totalTime) * outerClockRadius * Math.PI
-                }
-              />
-            </g>
-          )}
-          {model.state !== STATE.READY && (
-            <g class="timeLeft">
-              <circle cx={0} cy={0} r={clockRadius} />
-              <circle
-                class={`negative ${model.state == STATE.PAUSED && "paused"}`}
-                cx={0}
-                cy={0}
-                r={outerClockRadius / 2}
-                stroke-width={outerClockRadius}
-                stroke-dasharray={outerClockRadius * Math.PI}
-                stroke-dashoffset={
-                  (timeLeft / totalTime) * outerClockRadius * Math.PI
-                }
-                style={`animation-duration: ${timeLeft}ms;`}
-              />
-            </g>
-          )}
-          {model.state !== STATE.RUNNING && (
-            <circle class="inner-negative" cx={0} cy={0} r={innerClockRadius} />
-          )}
+          <g class="originalTime">
+            <circle cx={0} cy={0} r={clockRadius} />
+            <circle
+              class="negative"
+              cx={0}
+              cy={0}
+              r={outerClockRadius / 2}
+              stroke-width={outerClockRadius}
+              stroke-dasharray={outerClockRadius * Math.PI}
+              stroke-dashoffset={
+                (originalTime / totalTime) * outerClockRadius * Math.PI
+              }
+            />
+          </g>
+          <g class="timeLeft">
+            <circle cx={0} cy={0} r={clockRadius} />
+            <circle
+              class={`negative ${model.state == STATE.PAUSED && "paused"}`}
+              cx={0}
+              cy={0}
+              r={outerClockRadius / 2}
+              stroke-width={outerClockRadius}
+              stroke-dasharray={outerClockRadius * Math.PI}
+              stroke-dashoffset={
+                (timeLeft / totalTime) * outerClockRadius * Math.PI
+              }
+              style={`animation-duration: ${timeLeft}ms;`}
+            />
+          </g>
+          <circle
+            class="inner-negative"
+            cx={0}
+            cy={0}
+            r={model.state === STATE.RUNNING ? 0 : innerClockRadius}
+          >
+            <animate
+              class="animation--running-paused animation--running-ready"
+              begin="indefinite"
+              dur="500ms"
+              calcMode="spline"
+              keyTimes="0;1"
+              keySplines="0 0 0 1"
+              attributeName="r"
+              values={"0;" + innerClockRadius}
+            />
+            <animate
+              class="animation--ready-running animation--paused-running"
+              begin="indefinite"
+              dur="500ms"
+              calcMode="spline"
+              keyTimes="0;1"
+              keySplines="1 0 1 1"
+              attributeName="r"
+              to="0"
+              values={innerClockRadius + ";0"}
+            />
+          </circle>
+          }
           <circle class="middleDot" cx={0} cy={0} r={1} />
           {ticks}
           {model.state === STATE.READY && interactiveSegments}

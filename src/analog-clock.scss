@@ -18,9 +18,20 @@
   .timeLeft {
     fill: $color-primary;
     mix-blend-mode: darken;
+    transition: opacity 500ms;
+    .state--ready & {
+      opacity: 0;
+    }
   }
   .originalTime {
     fill: $color-primary-light;
+    transition: opacity 500ms;
+    .state--running & {
+      opacity: 0;
+    }
+    .state--paused & {
+      transition-delay: 500ms;
+    }
   }
   .negative {
     fill: none;
