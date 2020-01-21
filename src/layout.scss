@@ -13,6 +13,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: stretch;
+  font-size: 8vmin;
 
   #analog-clock,
   #digital-clock,
@@ -20,7 +21,8 @@ body {
     padding: 5vmin;
   }
 
-  .sideBlock {
+  .controls-container {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -31,9 +33,10 @@ body {
     flex-direction: column;
   }
 
-  &--square {
-    .sideBlock {
-      display: contents;
+  &--square,
+  &--wide {
+    .controls-container {
+      width: 9ch;
       > * {
         position: absolute;
         transform: translate(-50%, -50%);
@@ -47,6 +50,11 @@ body {
       #controls {
         top: 60%;
       }
+    }
+  }
+  &--square {
+    .controls-container {
+      display: contents;
     }
   }
 }

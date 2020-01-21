@@ -27,7 +27,7 @@ const layout = {
         style={`height:${doc.clientHeight}px`}
       >
         <AnalogClock />
-        <div class="sideBlock">
+        <div class="controls-container">
           <DigitalClock />
           <Controls />
         </div>

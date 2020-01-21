@@ -17,6 +17,10 @@ const majorTickFrequency = 5 * tickUnit;
 const clock = {
   view: function() {
     const originalTime = model.intermediateOriginalTime || model.originalTime;
+    const timeLeft =
+      model.state === STATE.PAUSED
+        ? model.timeLeft
+        : model.endTime - Date.now();
     const ticks = [];
     const interactiveSegments = [];
     const interactiveSegmentPrototype = `
@@ -111,9 +115,9 @@ const clock = {
                 stroke-width={outerClockRadius}
                 stroke-dasharray={outerClockRadius * Math.PI}
                 stroke-dashoffset={
-                  (model.timeLeft / totalTime) * outerClockRadius * Math.PI
+                  (timeLeft / totalTime) * outerClockRadius * Math.PI
                 }
-                style={`animation-duration: ${model.timeLeft}ms;`}
+                style={`animation-duration: ${timeLeft}ms;`}
               />
             </g>
           )}

@@ -2,6 +2,9 @@
   .layout--wide & {
     height: 100%;
   }
+  .layout--square & {
+    width: 100%;
+  }
 
   .tick {
     stroke: black;
@@ -43,6 +46,7 @@
     dominant-baseline: middle;
     font-size: 8px;
     font-variant-numeric: proportional-nums;
+    user-select: none;
     cursor: default;
     &.interactive {
       cursor: pointer;

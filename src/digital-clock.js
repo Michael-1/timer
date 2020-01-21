@@ -12,8 +12,9 @@ const input = {
     let time =
       model.state === STATE.READY ? model.originalTime : model.timeLeft;
     const seconds = Math.round(time / 1000) % 60;
-    const minutes = Math.floor(time / (1000 * 60)) % 60;
+    const minutes = (Math.round(time / 1000 - seconds) / 60) % 60;
     const hours = Math.floor(time / (1000 * 60 * 60));
+    console.debug(`${hours}:${minutes}:${seconds}`);
     let text, ghost;
     if (input.userInput === null) {
       const textHours = hours ? hours : "";
@@ -51,23 +52,20 @@ const input = {
         }
       }
     }
+    const textWidth = time < 10 * 60000 ? 4.3 : time < 60 * 60000 ? 5.3 : 6.8;
     const doc = document.documentElement;
     return (
-      <div
-        id="digital-clock"
-        style={
-          "font-size:" +
-          8 * 0.01 * Math.min(doc.clientHeight, doc.clientWidth) +
-          "px"
-        }
-      >
-        <form>
+      <div id="digital-clock" class={model.state}>
+        <form
+          style={model.state === STATE.RUNNING ? `width:${textWidth}ch` : ""}
+        >
           <input
             list="presets"
             value={text}
             oninput={input.setIntermediateTime}
             onblur={input.setTime}
             inputmode="decimal"
+            disabled={model.state !== STATE.READY}
           />
           <div class="ghost">
             {ghost}
@@ -91,14 +89,14 @@ const input = {
 
   setTime: function() {
     input.userInput = null;
-    const milliseconds = parseInput(this.value.replace(/\./g, ":"));
+    const milliseconds = parseInput(this.value.replace(/[\.\,\/]/g, ":"));
     if (!milliseconds) return;
     model.originalTime = milliseconds;
     clock.resetIntermediateTime();
   },
 
   setIntermediateTime: function() {
-    input.userInput = this.value.replace(/\./g, ":");
+    input.userInput = this.value.replace(/[\.\,\/]/g, ":");
     const milliseconds = parseInput(input.userInput);
     if (!milliseconds) return;
     model.intermediateOriginalTime = milliseconds;
