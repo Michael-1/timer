@@ -71,18 +71,16 @@
   .state--running &,
   .state--paused & {
     transition-delay: 500ms;
-
-    input {
-      border-color: transparent;
-      .layout--square & {
-        border-color: lightgray;
-      }
-    }
-
     .ghost {
       opacity: 0;
       transition-delay: 0s;
     }
+    input {
+      border-color: transparent;
+    }
+  }
+  .layout--square.state--running & input {
+    border-color: lightgray;
   }
 
   .state--paused & {
