@@ -1,4 +1,5 @@
 import m from "mithril";
+import { model } from "./model";
 import AnalogClock from "./analog-clock";
 import DigitalClock from "./digital-clock";
 import Controls from "./controls";
@@ -23,7 +24,7 @@ const layout = {
     if (doc.clientWidth * 4 < doc.clientHeight * 3) layout = LAYOUT.HIGH;
     return (
       <div
-        class={`layout layout--${layout}`}
+        class={`layout layout--${layout} state--${model.state}`}
         style={`height:${doc.clientHeight}px`}
       >
         <AnalogClock />

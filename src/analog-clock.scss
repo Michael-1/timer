@@ -1,3 +1,5 @@
+@import "variables";
+
 #analog-clock {
   .layout--wide & {
     height: 100%;
@@ -14,11 +16,11 @@
     }
   }
   .timeLeft {
-    fill: #ff6161;
+    fill: $color-primary;
     mix-blend-mode: darken;
   }
   .originalTime {
-    fill: #ffcece;
+    fill: $color-primary-light;
   }
   .negative {
     fill: none;

@@ -1,7 +1,9 @@
+@import "variables";
+
 #digital-clock {
   form {
     background-color: white;
-    border-radius: 0.5em;
+    border-radius: $border-radius;
     position: relative;
     white-space: nowrap;
     width: 6.8ch;
@@ -16,7 +18,7 @@
 
   input {
     z-index: 1;
-    border-radius: 0.5em;
+    border-radius: $border-radius;
     border-color: lightgrey;
     transition: border-color 1s;
     -webkit-appearance: none;
@@ -31,7 +33,7 @@
     }
     &:focus {
       outline: none;
-      box-shadow: inset 0 0.05em 0.05em lightgrey;
+      box-shadow: $highlight-focus;
     }
     &:disabled {
       background-color: white;
@@ -66,13 +68,26 @@
     font-variant-numeric: tabular-nums;
   }
 
-  &.running {
+  .state--running &,
+  .state--paused & {
     transition-delay: 500ms;
-    border-color: transparent;
+
+    input {
+      border-color: transparent;
+      .layout--square & {
+        border-color: lightgray;
+      }
+    }
 
     .ghost {
       opacity: 0;
       transition-delay: 0s;
+    }
+  }
+
+  .state--paused & {
+    input {
+      animation: $animation-blink;
     }
   }
 }

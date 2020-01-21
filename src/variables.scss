@@ -1,0 +1,17 @@
+$border-radius: 4vmin;
+
+$highlight-focus: inset 0 0.4vmin 0.4vmin lightgrey;
+$highlight-press: inset 0 0.8vmin 0.8vmin lightgrey;
+
+$color-primary: #ff6161;
+$color-primary-light: #ffcece;
+
+$animation-blink: blink 1s ease-out infinite alternate;
+@keyframes blink {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.2;
+  }
+}

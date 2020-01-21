@@ -14,7 +14,6 @@ const input = {
     const seconds = Math.round(time / 1000) % 60;
     const minutes = (Math.round(time / 1000 - seconds) / 60) % 60;
     const hours = Math.floor(time / (1000 * 60 * 60));
-    console.debug(`${hours}:${minutes}:${seconds}`);
     let text, ghost;
     if (input.userInput === null) {
       const textHours = hours ? hours : "";
@@ -55,10 +54,8 @@ const input = {
     const textWidth = time < 10 * 60000 ? 4.3 : time < 60 * 60000 ? 5.3 : 6.8;
     const doc = document.documentElement;
     return (
-      <div id="digital-clock" class={model.state}>
-        <form
-          style={model.state === STATE.RUNNING ? `width:${textWidth}ch` : ""}
-        >
+      <div id="digital-clock">
+        <form style={model.state !== STATE.READY ? `width:${textWidth}ch` : ""}>
           <input
             list="presets"
             value={text}
