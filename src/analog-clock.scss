@@ -18,9 +18,10 @@
   .timeLeft {
     fill: $color-primary;
     opacity: 1;
-    transition: opacity 0s 500ms;
+    transition: opacity 0ms;
     .state--ready & {
-      transition: opacity 0s;
+      opacity: 0;
+      transition: opacity 0ms 500ms;
     }
   }
   .originalTime {
@@ -57,5 +58,10 @@
 
   .disabled-click-overlay {
     fill: transparent;
+  }
+
+  .end-animation {
+    fill: none;
+    transform: rotate(-90deg);
   }
 }

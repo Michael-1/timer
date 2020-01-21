@@ -44,6 +44,8 @@ const model = {
       m.redraw();
     }, 1000);
     model.timeoutEnd = setTimeout(function() {
+      for (let el of document.getElementsByClassName(`animation--end`))
+        el.beginElement();
       model.reset();
       m.redraw();
     }, model.timeLeft);

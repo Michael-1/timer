@@ -82,6 +82,15 @@ const clock = {
         </text>
       );
     }
+
+    const endAnimationAttributes = {
+      dur: "2000ms",
+      begin: "indefinite",
+      calcMode: "spline",
+      keyTimes: `0;${0.5 + originalTime / (totalTime * 2)};1`,
+      keySplines: ".5 0 1 1; 0 0 .5 1"
+    };
+
     return (
       <svg
         id="analog-clock"
@@ -95,7 +104,14 @@ const clock = {
             ${drawArc(clockRadius, originalTime / totalTime)}
             ${drawArc(innerClockRadius, originalTime / totalTime, true)}
           `}
-          />
+          >
+            <animate
+              class="animation--end"
+              {...endAnimationAttributes}
+              attributeName="fill"
+              values="transparent;transparent;#ffcece"
+            />
+          </path>
           <path
             class="timeLeft"
             d={`
@@ -123,9 +139,43 @@ const clock = {
               fill="freeze"
             />
           </path>
-          <circle class="inner-negative" cx={0} cy={0} r={innerClockRadius}>
+          <circle
+            class="end-animation"
+            cx={0}
+            cy={0}
+            r={clockRadius / 2}
+            stroke-width={clockRadius}
+          >
             <animate
-              class="animation--running-paused animation--running-ready"
+              class="animation--end"
+              {...endAnimationAttributes}
+              attributeName="stroke-dasharray"
+              values={
+                `0 ${clockRadius * Math.PI};` +
+                `${clockRadius * Math.PI} 0;` +
+                `${clockRadius * Math.PI} ${clockRadius * Math.PI}`
+              }
+            />
+            <animate
+              class="animation--end"
+              {...endAnimationAttributes}
+              attributeName="stroke-dashoffset"
+              values={
+                "0;" +
+                "0;" +
+                (originalTime / totalTime - 1) * clockRadius * Math.PI
+              }
+            />
+            <animate
+              class="animation--end"
+              {...endAnimationAttributes}
+              attributeName="stroke"
+              values="#ff6161;#ff6161;#ffcece"
+            />
+          </circle>
+          <circle class="inner-negative" cx={0} cy={0} r={0}>
+            <animate
+              class="animation--running-paused"
               begin="indefinite"
               dur="500ms"
               calcMode="spline"
@@ -143,19 +193,15 @@ const clock = {
               keyTimes="0;1"
               keySplines="1 0 1 1"
               attributeName="r"
-              to="0"
               values={innerClockRadius + ";0"}
               fill="freeze"
             />
-          </circle>
-          <circle
-            class="end-animation"
-            cx={0}
-            cy={0}
-            r={clockRadius / 2}
-            style="display:none"
-          >
-            <animate class="animation--end" />
+            <animate
+              class="animation--end"
+              {...endAnimationAttributes}
+              attributeName="r"
+              values={"0;0;" + innerClockRadius}
+            />
           </circle>
           <circle class="middleDot" cx={0} cy={0} r={1} />
           {ticks}
