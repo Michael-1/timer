@@ -12,7 +12,7 @@ const input = {
     let time =
       model.state === STATE.READY ? model.originalTime : model.timeLeft;
     const seconds = Math.floor(time / 1000) % 60;
-    const minutes = (Math.floor(time / 1000 - seconds) / 60) % 60;
+    const minutes = Math.floor(time / (1000 * 60)) % 60;
     const hours = Math.floor(time / (1000 * 60 * 60));
     let text, ghost;
     if (input.userInput === null) {
@@ -24,10 +24,9 @@ const input = {
         : "";
       const textSeconds = time ? ":" + String(seconds).padStart(2, 0) : "";
       text = textHours + textMinutes + textSeconds;
-      const ghostHours = hours ? "" : "0:";
-      const ghostMinutes =
-        hours || minutes ? (minutes >= 10 || hours ? "" : "0") : "00:";
-      const ghostSeconds = time ? (time >= 10000 ? "" : "0") : "00";
+      const ghostHours = hours ? "" : "0";
+      const ghostMinutes = time ? (minutes >= 10 || hours ? ":" : ":0") : ":00";
+      const ghostSeconds = time ? "" : ":00";
       ghost = ghostHours + ghostMinutes + ghostSeconds;
     } else {
       text = input.userInput;
