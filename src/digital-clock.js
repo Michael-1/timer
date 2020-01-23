@@ -25,7 +25,13 @@ const input = {
       const textSeconds = time ? ":" + String(seconds).padStart(2, 0) : "";
       text = textHours + textMinutes + textSeconds;
       const ghostHours = hours ? "" : "0";
-      const ghostMinutes = time ? (minutes >= 10 || hours ? ":" : ":0") : ":00";
+      const ghostMinutes = time
+        ? hours
+          ? " "
+          : minutes >= 10
+          ? ":"
+          : ":0"
+        : ":00";
       const ghostSeconds = time ? "" : ":00";
       ghost = ghostHours + ghostMinutes + ghostSeconds;
     } else {
@@ -114,18 +120,19 @@ function parseInput(input) {
   if (result < 0) result = null;
   if (result < 1000) result *= 60000;
   if (result) return result;
-  const regHourMinSec = /(\d{0,2})\D(\d{1,2})\D(\d{1,2})/;
-  regResult = regHourMinSec.exec(input);
+  let regResult = /(\d{0,2})\D(\d{1,2})\D(\d{1,2})/.exec(input);
   if (regResult)
     result =
       ((parseInt(regResult[1]) * 60 + parseInt(regResult[2])) * 60 +
         parseInt(regResult[3])) *
       1000;
   if (result) return result;
-  const regMinSec = /(\d{0,2})\D(\d{1,2})/;
-  let regResult = regMinSec.exec(input);
+  regResult = /(\d{0,2})\D(\d{1,2})/.exec(input);
   if (regResult)
     result = (parseInt(regResult[1]) * 60 + parseInt(regResult[2])) * 1000;
+  if (result) return result;
+  regResult = /\D(\d{1,2})/.exec(input);
+  if (regResult) result = parseInt(regResult[1]) * 1000;
   return result;
 }
 
