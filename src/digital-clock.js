@@ -11,7 +11,7 @@ const input = {
   view: function() {
     let time =
       model.state === STATE.READY ? model.originalTime : model.timeLeft;
-    const seconds = Math.floor(time / 1000) % 60;
+    const seconds = Math.round(time / 1000) % 60;
     const minutes = Math.floor(time / (1000 * 60)) % 60;
     const hours = Math.floor(time / (1000 * 60 * 60));
     let text, ghost;

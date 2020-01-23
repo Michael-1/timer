@@ -37,18 +37,18 @@ const model = {
   run: function() {
     const oldState = model.state;
     model.state = STATE.RUNNING;
-    model.endTime = Date.now() + --model.timeLeft;
+    model.endTime = Date.now() + model.timeLeft;
     m.redraw();
     model.countdown = setInterval(function() {
       model.timeLeft = model.endTime - Date.now();
       m.redraw();
     }, 1000);
     model.timeoutEnd = setTimeout(function() {
-      for (let el of document.getElementsByClassName(`animation--end`))
-        el.beginElement();
       new Audio("bell.ogg").play();
       model.reset();
       m.redraw();
+      for (let el of document.getElementsByClassName(`animation--end`))
+        el.beginElement();
     }, model.timeLeft);
     model.animateElements(oldState);
   },
@@ -56,6 +56,7 @@ const model = {
   reset: function() {
     const oldState = model.state;
     model.state = STATE.READY;
+    model.timeLeft = 0;
     clearTimeout(model.timeoutEnd);
     clearInterval(model.countdown);
     if (model.timeLeft > 1000) model.animateElements(oldState);
