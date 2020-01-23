@@ -7,8 +7,7 @@ const clockRadius = 50;
 const majorTickSize = clockRadius / 5;
 const minorTickSize = majorTickSize - 1;
 const innerClockRadius = clockRadius - minorTickSize;
-const outerClockRadius = clockRadius + 1;
-const labelFontSize = 8;
+const labelFontSize = 7;
 
 const totalTime = 60 * 60 * 1000;
 const tickUnit = 60 * 1000;
