@@ -60,6 +60,12 @@ const input = {
     return (
       <div id="digital-clock">
         <form
+          onsubmit={function(e) {
+            e.preventDefault();
+            if (model.intermediateOriginalTime)
+              model.originalTime = model.intermediateOriginalTime;
+            model.start();
+          }}
           {...(model.state !== STATE.READY
             ? { style: `width:${textWidth}ch`, onclick: model.clickOnDisabled }
             : {})}
