@@ -46,6 +46,7 @@ const model = {
     model.timeoutEnd = setTimeout(function() {
       for (let el of document.getElementsByClassName(`animation--end`))
         el.beginElement();
+      new Audio("bell.ogg").play();
       model.reset();
       m.redraw();
     }, model.timeLeft);
@@ -57,7 +58,7 @@ const model = {
     model.state = STATE.READY;
     clearTimeout(model.timeoutEnd);
     clearInterval(model.countdown);
-    model.animateElements(oldState);
+    if (model.timeLeft > 1000) model.animateElements(oldState);
   },
 
   clickOnDisabled: function() {

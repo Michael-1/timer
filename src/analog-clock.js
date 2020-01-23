@@ -87,7 +87,7 @@ const clock = {
       dur: "2000ms",
       begin: "indefinite",
       calcMode: "spline",
-      keyTimes: `0;${0.5 + originalTime / (totalTime * 2)};1`,
+      keyTimes: `0;${0.4 + originalTime / (totalTime * 2)};1`,
       keySplines: ".5 0 1 1; 0 0 .5 1"
     };
 
@@ -175,7 +175,7 @@ const clock = {
           </circle>
           <circle class="inner-negative" cx={0} cy={0} r={0}>
             <animate
-              class="animation--running-paused"
+              class="animation--running-paused animation--running-ready"
               begin="indefinite"
               dur="500ms"
               calcMode="spline"

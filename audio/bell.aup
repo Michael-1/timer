@@ -1,0 +1,71 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE project PUBLIC "-//audacityproject-1.3.0//DTD//EN" "http://audacity.sourceforge.net/xml/audacityproject-1.3.0.dtd" >
+<project xmlns="http://audacity.sourceforge.net/xml/" projname="bell_data" version="1.3.0" audacityversion="2.2.2" sel0="2.1579583333" sel1="3.3183125000" vpos="144" h="0.0000000000" zoom="383.6956521739" rate="48000.0" snapto="off" selectionformat="hh:mm:ss + Millisekunden" frequencyformat="Hz" bandwidthformat="Oktaven">
+	<tags/>
+	<wavetrack name="378911__13gkopeckak__bell" channel="0" linked="1" mute="0" solo="0" height="150" minimized="0" isSelected="0" rate="48000" gain="1.0" pan="0.0" colorindex="0">
+		<waveclip offset="0.00000000" colorindex="0">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="72558">
+				<waveblock start="0">
+					<simpleblockfile filename="eff1f225.au" len="72558" min="-0.745321" max="0.853893" rms="0.077178"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+	<wavetrack name="378911__13gkopeckak__bell" channel="1" linked="0" mute="0" solo="0" height="150" minimized="0" isSelected="0" rate="48000" gain="1.0" pan="0.0" colorindex="0">
+		<waveclip offset="0.00000000" colorindex="0">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="72558">
+				<waveblock start="0">
+					<simpleblockfile filename="eff1ff04.au" len="72558" min="-0.745321" max="0.853893" rms="0.077178"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+	<wavetrack name="378911__13gkopeckak__bell" channel="0" linked="1" mute="0" solo="0" height="150" minimized="0" isSelected="0" rate="48000" gain="1.0" pan="0.0" colorindex="0">
+		<waveclip offset="1.00079167" colorindex="0">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="55544">
+				<waveblock start="0">
+					<simpleblockfile filename="eff1fa1e.au" len="55544" min="-0.749762" max="0.860486" rms="0.088073"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+	<wavetrack name="378911__13gkopeckak__bell" channel="1" linked="0" mute="0" solo="0" height="150" minimized="0" isSelected="0" rate="48000" gain="1.0" pan="0.0" colorindex="0">
+		<waveclip offset="1.00079167" colorindex="0">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="55544">
+				<waveblock start="0">
+					<simpleblockfile filename="eff1feb6.au" len="55544" min="-0.749762" max="0.860486" rms="0.088073"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+	<wavetrack name="378911__13gkopeckak__bell" channel="0" linked="1" mute="0" solo="0" height="150" minimized="0" isSelected="1" rate="48000" gain="1.0" pan="0.0" colorindex="0">
+		<waveclip offset="2.15795833" colorindex="0">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="55697">
+				<waveblock start="0">
+					<simpleblockfile filename="eff1f644.au" len="55697" min="-0.019082" max="0.019518" rms="0.003365"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="2">
+				<controlpoint t="0.007820703494" val="0.992957711220"/>
+				<controlpoint t="1.160343868036" val="0.056338071823"/>
+			</envelope>
+		</waveclip>
+	</wavetrack>
+	<wavetrack name="378911__13gkopeckak__bell" channel="1" linked="0" mute="0" solo="0" height="150" minimized="0" isSelected="1" rate="48000" gain="1.0" pan="0.0" colorindex="0">
+		<waveclip offset="2.15795833" colorindex="0">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="55697">
+				<waveblock start="0">
+					<simpleblockfile filename="eff1fe69.au" len="55697" min="-0.019082" max="0.019518" rms="0.003365"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="2">
+				<controlpoint t="0.007820703494" val="0.992957711220"/>
+				<controlpoint t="1.160343868036" val="0.056338071823"/>
+			</envelope>
+		</waveclip>
+	</wavetrack>
+</project>
