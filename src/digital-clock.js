@@ -55,8 +55,8 @@ const input = {
     if (time < 0) {
       text = "";
     }
-    const textWidth = time < 10 * 60000 ? 4.4 : time < 60 * 60000 ? 5.4 : 6.8;
-    const doc = document.documentElement;
+    const textWidth = time < 10 * 60000 ? 4.4 : time < 60 * 60000 ? 5.3 : 6.8;
+
     return (
       <div id="digital-clock">
         <form
