@@ -1,6 +1,7 @@
 @import "variables";
 
 #controls {
+  white-space: nowrap;
   button {
     display: inline-flex;
     justify-content: center;

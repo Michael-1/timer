@@ -12,7 +12,7 @@ body {
 .layout {
   display: flex;
   justify-content: center;
-  align-items: stretch;
+  align-items: center;
   font-size: 7vmin;
 
   #analog-clock,
@@ -27,22 +27,21 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    width: 9ch;
   }
 
   &--high {
     flex-direction: column;
   }
 
-  &--square,
-  &--wide {
+  &--square {
     .controls-container {
-      width: 9ch;
+      display: contents;
       > * {
         position: absolute;
         transform: translate(-50%, -50%);
         left: 50%;
         padding: 0;
-        margin: auto;
       }
       #digital-clock {
         top: 50%;
@@ -52,9 +51,10 @@ body {
       }
     }
   }
-  &--square {
-    .controls-container {
-      display: contents;
+  &--wide {
+    #controls {
+      position: absolute;
+      top: 50%;
     }
   }
 }

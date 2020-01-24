@@ -1,10 +1,9 @@
 @import "variables";
 
 #analog-clock {
-  .layout--wide & {
-    height: 100%;
-  }
-  .layout--square & {
+  height: 100%;
+  .layout--square,
+  .layout--high & {
     width: 100%;
   }
 
