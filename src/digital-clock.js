@@ -62,8 +62,10 @@ const input = {
         <form
           onsubmit={function(e) {
             e.preventDefault();
-            if (model.intermediateOriginalTime)
+            if (model.intermediateOriginalTime) {
               model.originalTime = model.intermediateOriginalTime;
+              input.userInput = null;
+            }
             model.start();
           }}
           {...(model.state !== STATE.READY
