@@ -17,7 +17,7 @@ const HOUR = 60 * MINUTE;
 
 const clock = {
   totalTime: HOUR,
-  tickUnit: MINUTE,
+  tickFrequency: MINUTE,
   majorTickFrequency: 5 * MINUTE,
   labelUnit: MINUTE,
 
@@ -25,11 +25,11 @@ const clock = {
     // Clock scaling
     if (model.originalTime) {
       this.totalTime = Math.ceil(model.originalTime / HOUR) * HOUR;
-      this.tickUnit = 15 * MINUTE;
+      this.tickFrequency = 15 * MINUTE;
       this.majorTickFrequency = HOUR;
       this.labelUnit = HOUR;
       if (model.originalTime <= 2 * HOUR) {
-        this.tickUnit = MINUTE;
+        this.tickFrequency = MINUTE;
         this.majorTickFrequency = 10 * MINUTE;
         this.labelUnit = MINUTE;
       }
@@ -38,12 +38,12 @@ const clock = {
       }
       if (model.originalTime <= 10 * MINUTE) {
         this.totalTime = 10 * MINUTE;
-        this.tickUnit = 10 * SECOND;
+        this.tickFrequency = 10 * SECOND;
         this.majorTickFrequency = 1 * MINUTE;
       }
       if (model.originalTime <= MINUTE) {
         this.totalTime = MINUTE;
-        this.tickUnit = SECOND;
+        this.tickFrequency = SECOND;
         this.majorTickFrequency = 15 * SECOND;
         this.labelUnit = SECOND;
       }
@@ -61,13 +61,13 @@ const clock = {
     const interactiveSegments = [];
     const interactiveSegmentPrototype = `
       M 0 ${-clockRadius}
-      ${drawArc(clockRadius, this.tickUnit / this.totalTime)}
-      ${drawArc(innerClockRadius, this.tickUnit / this.totalTime, true)}
+      ${drawArc(clockRadius, this.tickFrequency / this.totalTime)}
+      ${drawArc(innerClockRadius, this.tickFrequency / this.totalTime, true)}
     `;
     for (
-      var time = this.tickUnit;
+      var time = this.tickFrequency;
       time <= this.totalTime;
-      time += this.tickUnit
+      time += this.tickFrequency
     ) {
       const rotation = -time * (360 / this.totalTime);
       const majorTick = !(time % this.majorTickFrequency);
@@ -77,7 +77,12 @@ const clock = {
           x1={0}
           y1={-clockRadius}
           x2={0}
-          y2={-clockRadius + (majorTick ? majorTickSize : minorTickSize)}
+          y2={
+            -clockRadius +
+            (!majorTick && (time / this.labelUnit) % 5
+              ? minorTickSize
+              : majorTickSize)
+          }
           style={`transform:rotate(${rotation}deg)`}
           key={"line-" + time}
           data-time={time}
@@ -87,7 +92,7 @@ const clock = {
         <path
           class="interactive-segment"
           d={interactiveSegmentPrototype}
-          transform={`rotate(${-(time - this.tickUnit / 2) *
+          transform={`rotate(${-(time - this.tickFrequency / 2) *
             (360 / this.totalTime)})`}
           onmouseenter={clock.setIntermediateTime}
           onmouseleave={clock.resetIntermediateTime}
