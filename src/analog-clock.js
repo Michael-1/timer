@@ -1,5 +1,7 @@
 import m from "mithril";
 import { model, STATE } from "./model";
+import Line from "./analog-clock-tick";
+import Label from "./analog-clock-label";
 
 import "./analog-clock.scss";
 
@@ -9,42 +11,84 @@ const minorTickSize = majorTickSize - 1;
 const innerClockRadius = clockRadius - minorTickSize;
 const labelFontSize = 7;
 
-const totalTime = 60 * 60 * 1000;
-const tickUnit = 60 * 1000;
-const majorTickFrequency = 5 * tickUnit;
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
 
 const clock = {
+  totalTime: HOUR,
+  tickUnit: MINUTE,
+  majorTickFrequency: 5 * MINUTE,
+  labelUnit: MINUTE,
+
   view: function() {
+    // Clock scaling
+    if (model.originalTime) {
+      this.totalTime = Math.ceil(model.originalTime / HOUR) * HOUR;
+      this.tickUnit = 15 * MINUTE;
+      this.majorTickFrequency = HOUR;
+      this.labelUnit = HOUR;
+      if (model.originalTime <= 2 * HOUR) {
+        this.tickUnit = MINUTE;
+        this.majorTickFrequency = 10 * MINUTE;
+        this.labelUnit = MINUTE;
+      }
+      if (model.originalTime <= HOUR) {
+        this.majorTickFrequency = 5 * MINUTE;
+      }
+      if (model.originalTime <= 10 * MINUTE) {
+        this.totalTime = 10 * MINUTE;
+        this.tickUnit = 10 * SECOND;
+        this.majorTickFrequency = 1 * MINUTE;
+      }
+      if (model.originalTime <= MINUTE) {
+        this.totalTime = MINUTE;
+        this.tickUnit = SECOND;
+        this.majorTickFrequency = 15 * SECOND;
+        this.labelUnit = SECOND;
+      }
+    }
+
+    // Define sources
     let originalTime =
       model.intermediateOriginalTime || model.originalTime || 0;
-    if (originalTime === totalTime) originalTime--;
+    if (originalTime === this.totalTime) originalTime--;
     let timeLeft = model.timeLeft || 0;
-    if (timeLeft === totalTime) timeLeft--;
+    if (timeLeft === this.totalTime) timeLeft--;
+
+    // Prepare ticks and labels
     const ticks = [];
     const interactiveSegments = [];
     const interactiveSegmentPrototype = `
       M 0 ${-clockRadius}
-      ${drawArc(clockRadius, tickUnit / totalTime)}
-      ${drawArc(innerClockRadius, tickUnit / totalTime, true)}
+      ${drawArc(clockRadius, this.tickUnit / this.totalTime)}
+      ${drawArc(innerClockRadius, this.tickUnit / this.totalTime, true)}
     `;
-    for (var time = tickUnit; time <= totalTime; time += tickUnit) {
-      const rotation = -time * (360 / totalTime);
-      const majorTick = !(time % majorTickFrequency);
+    for (
+      var time = this.tickUnit;
+      time <= this.totalTime;
+      time += this.tickUnit
+    ) {
+      const rotation = -time * (360 / this.totalTime);
+      const majorTick = !(time % this.majorTickFrequency);
       ticks.push(
-        <line
+        <Line
           class={`tick ${majorTick ? "major" : ""}`}
           x1={0}
           y1={-clockRadius}
           x2={0}
           y2={-clockRadius + (majorTick ? majorTickSize : minorTickSize)}
-          transform={`rotate(${rotation},0,0)`}
+          style={`transform:rotate(${rotation}deg)`}
+          key={"line-" + time}
+          data-time={time}
         />
       );
       interactiveSegments.push(
         <path
           class="interactive-segment"
           d={interactiveSegmentPrototype}
-          transform={`rotate(${-(time - tickUnit / 2) * (360 / totalTime)})`}
+          transform={`rotate(${-(time - this.tickUnit / 2) *
+            (360 / this.totalTime)})`}
           onmouseenter={clock.setIntermediateTime}
           onmouseleave={clock.resetIntermediateTime}
           onclick={clock.setTime}
@@ -64,9 +108,10 @@ const clock = {
           1
       };
       ticks.push(
-        <text
+        <Label
           x={textPosition.x}
           y={textPosition.y}
+          key={"label-" + time}
           data-time={time}
           {...(model.state === STATE.READY
             ? {
@@ -77,8 +122,10 @@ const clock = {
               }
             : {})}
         >
-          {time / tickUnit}
-        </text>
+          {time === this.totalTime && model.state !== STATE.READY
+            ? 0
+            : time / this.labelUnit}
+        </Label>
       );
     }
 
@@ -86,10 +133,11 @@ const clock = {
       dur: "2000ms",
       begin: "indefinite",
       calcMode: "spline",
-      keyTimes: `0;${0.4 + originalTime / (totalTime * 2)};1`,
+      keyTimes: `0;${0.4 + model.originalTime / (this.totalTime * 2)};1`,
       keySplines: ".5 0 1 1; 0 0 .5 1"
     };
 
+    // Put it all together and draw fills
     return (
       <svg
         id="analog-clock"
@@ -100,8 +148,8 @@ const clock = {
             class="originalTime"
             d={`
             M 0 ${-clockRadius}
-            ${drawArc(clockRadius, originalTime / totalTime)}
-            ${drawArc(innerClockRadius, originalTime / totalTime, true)}
+            ${drawArc(clockRadius, originalTime / this.totalTime)}
+            ${drawArc(innerClockRadius, originalTime / this.totalTime, true)}
           `}
           >
             <animate
@@ -115,7 +163,7 @@ const clock = {
             class="timeLeft"
             d={`
               M 0 ${-clockRadius}
-              ${drawArc(clockRadius, timeLeft / totalTime)}
+              ${drawArc(clockRadius, timeLeft / this.totalTime)}
               L 0 0
             `}
           >
@@ -162,7 +210,7 @@ const clock = {
               values={
                 "0;" +
                 "0;" +
-                (originalTime / totalTime - 1) * clockRadius * Math.PI
+                (originalTime / this.totalTime - 1) * clockRadius * Math.PI
               }
             />
             <animate

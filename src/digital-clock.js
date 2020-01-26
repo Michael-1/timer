@@ -128,14 +128,14 @@ function parseInput(input) {
   if (result < 0) result = null;
   if (result < 1000) result *= 60000;
   if (result) return result;
-  let regResult = /(\d{0,2})\D(\d{1,2})\D(\d{1,2})/.exec(input);
+  let regResult = /(\d+)\D(\d{1,2})\D(\d{1,2})/.exec(input);
   if (regResult)
     result =
       ((parseInt(regResult[1]) * 60 + parseInt(regResult[2])) * 60 +
         parseInt(regResult[3])) *
       1000;
   if (result) return result;
-  regResult = /(\d{0,2})\D(\d{1,2})/.exec(input);
+  regResult = /(\d+)\D(\d{1,2})/.exec(input);
   if (regResult)
     result = (parseInt(regResult[1]) * 60 + parseInt(regResult[2])) * 1000;
   if (result) return result;

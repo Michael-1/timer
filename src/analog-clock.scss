@@ -10,8 +10,10 @@
   .tick {
     stroke: black;
     stroke-width: 0.1;
+    transition: stroke-width 1000ms 0ms, transform 500ms 500ms;
     &.major {
       stroke-width: 0.5;
+      transition: stroke-width 1000ms 500ms, transform 500ms 500ms;
     }
   }
   .timeLeft {
@@ -49,6 +51,16 @@
       -webkit-tap-highlight-color: transparent;
     }
   }
+
+  text,
+  .tick {
+    opacity: 0;
+    animation: appear 500ms 1000ms forwards;
+    &.fade {
+      animation: fade 500ms forwards;
+    }
+  }
+
   .interactive-segment {
     fill: transparent;
     cursor: pointer;
