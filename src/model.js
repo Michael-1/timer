@@ -13,8 +13,9 @@ const model = {
   intermediateOriginalTime: null,
   timeLeft: null,
   endTime: null,
+
+  timeoutCountdown: null,
   timeoutEnd: null,
-  countdown: null,
 
   start: function() {
     model.timeLeft = model.originalTime;
@@ -26,7 +27,7 @@ const model = {
     model.state = STATE.PAUSED;
     model.timeLeft = model.endTime - Date.now();
     clearTimeout(model.timeoutEnd);
-    clearInterval(model.countdown);
+    clearInterval(model.timeoutCountdown);
     model.animateElements(oldState);
   },
 
@@ -38,11 +39,7 @@ const model = {
     const oldState = model.state;
     model.state = STATE.RUNNING;
     model.endTime = Date.now() + model.timeLeft;
-    m.redraw();
-    model.countdown = setInterval(function() {
-      model.timeLeft = model.endTime - Date.now();
-      m.redraw();
-    }, 1000);
+    model.countdown();
     model.timeoutEnd = setTimeout(function() {
       new Audio("bell.ogg").play();
       model.reset();
@@ -53,12 +50,18 @@ const model = {
     model.animateElements(oldState);
   },
 
+  countdown: function() {
+    model.timeLeft = model.endTime - Date.now();
+    m.redraw();
+    model.timeoutCountdown = setTimeout(model.countdown, model.timeLeft % 1000);
+  },
+
   reset: function() {
     const oldState = model.state;
     model.state = STATE.READY;
     model.timeLeft = 0;
     clearTimeout(model.timeoutEnd);
-    clearInterval(model.countdown);
+    clearInterval(model.timeoutCountdown);
     if (model.timeLeft > 1000) model.animateElements(oldState);
   },
 
