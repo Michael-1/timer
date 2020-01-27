@@ -1,5 +1,5 @@
 import m from "mithril";
-import { model } from "./model";
+import { model, STATE } from "./model";
 import AnalogClock from "./analog-clock";
 import DigitalClock from "./digital-clock";
 import Controls from "./controls";
@@ -40,3 +40,47 @@ const layout = {
 };
 
 m.mount(document.body, layout);
+
+document.onkeyup = function(e) {
+  if (e.key === " ") {
+    if (model.state === STATE.READY) {
+      model.start();
+      return;
+    }
+    if (model.state === STATE.RUNNING) {
+      model.pause();
+      m.redraw();
+      return;
+    }
+    if (model.state === STATE.PAUSED) {
+      model.resume();
+      return;
+    }
+  }
+  if (e.key === "Escape") {
+    model.reset();
+    m.redraw();
+    return;
+  }
+};
+
+document.onkeydown = function(e) {
+  if (e.key === " ") {
+    if (model.state === STATE.READY) {
+      document.getElementById("run").focus();
+      return;
+    }
+    if (model.state === STATE.RUNNING) {
+      document.getElementById("pause").focus();
+      return;
+    }
+    if (model.state === STATE.PAUSED) {
+      document.getElementById("run").focus();
+      return;
+    }
+  }
+  if (e.key === "Escape") {
+    document.getElementById("reset").focus();
+    return;
+  }
+};

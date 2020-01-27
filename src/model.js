@@ -42,6 +42,7 @@ const model = {
     model.countdown();
     model.timeoutEnd = window.setTimeout(function() {
       new Audio("bell.ogg").play();
+      model.timeLeft = 0;
       model.reset();
       m.redraw();
       for (let el of document.getElementsByClassName(`animation--end`))

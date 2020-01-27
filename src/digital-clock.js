@@ -77,6 +77,9 @@ const input = {
             value={text}
             oninput={input.setIntermediateTime}
             onblur={input.setTime}
+            onkeyup={function(e) {
+              e.stopPropagation();
+            }}
             inputmode="decimal"
             disabled={model.state !== STATE.READY}
           />
