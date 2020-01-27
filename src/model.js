@@ -17,6 +17,19 @@ const model = {
   timeoutCountdown: null,
   timeoutEnd: null,
 
+  setTime: function(time) {
+    model.originalTime = time;
+    model.resetIntermediateTime();
+  },
+
+  setIntermediateTime: function(time) {
+    model.intermediateOriginalTime = time;
+  },
+
+  resetIntermediateTime: function() {
+    model.intermediateOriginalTime = null;
+  },
+
   start: function() {
     model.timeLeft = model.originalTime;
     model.run();

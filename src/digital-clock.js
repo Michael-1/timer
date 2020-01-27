@@ -3,7 +3,6 @@ const ms = require("ms");
 const { model, STATE } = require("./model");
 
 import "./digital-clock.scss";
-import clock from "./analog-clock";
 
 const input = {
   userInput: null,
@@ -107,19 +106,14 @@ const input = {
     input.userInput = null;
     const milliseconds = parseInput(this.value.replace(/[\.\,\/]/g, ":"));
     if (!milliseconds) return;
-    model.originalTime = milliseconds;
-    clock.resetIntermediateTime();
+    model.setTime(milliseconds);
   },
 
   setIntermediateTime: function() {
     input.userInput = this.value.replace(/[\.\,\/]/g, ":");
     const milliseconds = parseInput(input.userInput);
     if (!milliseconds) return;
-    model.intermediateOriginalTime = milliseconds;
-  },
-
-  resetIntermediateTime: function() {
-    model.intermediateOriginalTime = null;
+    model.setIntermediateTime(milliseconds);
   }
 };
 

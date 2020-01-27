@@ -92,7 +92,7 @@ const clock = {
             transform={`rotate(${-(time - this.tickFrequency / 2) *
               (360 / this.totalTime)})`}
             onmouseenter={clock.setIntermediateTime}
-            onmouseleave={clock.resetIntermediateTime}
+            onmouseleave={model.resetIntermediateTime}
             onclick={clock.setTime}
             data-time={time}
           />
@@ -270,16 +270,11 @@ const clock = {
   },
 
   setTime: function() {
-    model.originalTime = parseInt(this.dataset.time);
-    clock.resetIntermediateTime();
+    model.setTime(parseInt(this.dataset.time));
   },
 
   setIntermediateTime: function() {
-    model.intermediateOriginalTime = parseInt(this.dataset.time);
-  },
-
-  resetIntermediateTime: function() {
-    model.intermediateOriginalTime = null;
+    model.setIntermediateTime(parseInt(this.dataset.time));
   }
 };
 
