@@ -1,6 +1,8 @@
 @import "variables";
 
 #analog-clock {
+  shape-rendering: geometricPrecision;
+
   height: 100%;
   .layout--square,
   .layout--high & {
@@ -58,6 +60,9 @@
     animation: appear 500ms 1000ms forwards;
     &.fade {
       animation: fade 500ms forwards;
+    }
+    &.fade-collapse {
+      animation: fade 1000ms forwards;
     }
   }
 
