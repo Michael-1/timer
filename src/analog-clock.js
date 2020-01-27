@@ -64,11 +64,7 @@ const clock = {
       ${drawArc(clockRadius, this.tickFrequency / this.totalTime)}
       ${drawArc(innerClockRadius, this.tickFrequency / this.totalTime, true)}
     `;
-    for (
-      var time = this.tickFrequency;
-      time <= this.totalTime;
-      time += this.tickFrequency
-    ) {
+    for (let time = 0; time <= this.totalTime; time += this.tickFrequency) {
       const rotation = -time * (360 / this.totalTime);
       const majorTick = !(time % this.majorTickFrequency);
       ticks.push(
@@ -84,23 +80,25 @@ const clock = {
               : majorTickSize)
           }
           style={`transform:rotate(${rotation}deg)`}
-          key={"line-" + time}
+          key={"line_" + time}
           data-time={time}
         />
       );
-      interactiveSegments.push(
-        <path
-          class="interactive-segment"
-          d={interactiveSegmentPrototype}
-          transform={`rotate(${-(time - this.tickFrequency / 2) *
-            (360 / this.totalTime)})`}
-          onmouseenter={clock.setIntermediateTime}
-          onmouseleave={clock.resetIntermediateTime}
-          onclick={clock.setTime}
-          data-time={time}
-        />
-      );
-      if (!majorTick) {
+      if (model.state === STATE.READY && time !== 0) {
+        interactiveSegments.push(
+          <path
+            class="interactive-segment"
+            d={interactiveSegmentPrototype}
+            transform={`rotate(${-(time - this.tickFrequency / 2) *
+              (360 / this.totalTime)})`}
+            onmouseenter={clock.setIntermediateTime}
+            onmouseleave={clock.resetIntermediateTime}
+            onclick={clock.setTime}
+            data-time={time}
+          />
+        );
+      }
+      if (!majorTick || time === this.totalTime) {
         continue;
       }
       const textPosition = {
@@ -112,12 +110,14 @@ const clock = {
             Math.cos((-rotation / 360) * (2 * Math.PI)) +
           1
       };
+      const labelText = time / this.labelUnit;
       ticks.push(
         <Label
+          key={"label_" + time + "_" + labelText}
           x={textPosition.x}
           y={textPosition.y}
-          key={"label-" + time}
-          data-time={time}
+          data-time={time || this.totalTime}
+          data-totaltime={this.totalTime}
           {...(model.state === STATE.READY
             ? {
                 class: "interactive",
@@ -127,9 +127,7 @@ const clock = {
               }
             : {})}
         >
-          {time === this.totalTime && model.state !== STATE.READY
-            ? 0
-            : time / this.labelUnit}
+          {labelText}
         </Label>
       );
     }
@@ -146,128 +144,127 @@ const clock = {
     return (
       <svg
         id="analog-clock"
-        viewBox={`0 0 ${clockRadius * 2} ${clockRadius * 2}`}
+        viewBox={`${-clockRadius} ${-clockRadius} ${clockRadius *
+          2} ${clockRadius * 2}`}
       >
-        <g transform={`translate(${clockRadius} ${clockRadius})`}>
-          <path
-            class="originalTime"
-            d={`
+        <path
+          class="originalTime"
+          d={`
             M 0 ${-clockRadius}
             ${drawArc(clockRadius, originalTime / this.totalTime)}
             ${drawArc(innerClockRadius, originalTime / this.totalTime, true)}
           `}
-          >
-            <animate
-              class="animation--end"
-              {...endAnimationAttributes}
-              attributeName="fill"
-              values="transparent;transparent;#ffcece"
-            />
-          </path>
-          <path
-            class="timeLeft"
-            d={`
+        >
+          <animate
+            class="animation--end"
+            {...endAnimationAttributes}
+            attributeName="fill"
+            values="transparent;transparent;#ffcece"
+          />
+        </path>
+        <path
+          class="timeLeft"
+          d={`
               M 0 ${-clockRadius}
               ${drawArc(clockRadius, timeLeft / this.totalTime)}
               L 0 0
             `}
-          >
-            <animate
-              class="animation--running-ready animation--paused-ready"
-              begin="indefinite"
-              dur="500ms"
-              attributeName="fill"
-              from="#ff6161"
-              to="#ffcece"
-              fill="freeze"
-            />
-            <animate
-              class="animation--ready-running"
-              begin="indefinite"
-              dur="500ms"
-              attributeName="fill"
-              to="#ff6161"
-              from="#ffcece"
-              fill="freeze"
-            />
-          </path>
+        >
+          <animate
+            class="animation--running-ready animation--paused-ready"
+            begin="indefinite"
+            dur="500ms"
+            attributeName="fill"
+            from="#ff6161"
+            to="#ffcece"
+            fill="freeze"
+          />
+          <animate
+            class="animation--ready-running"
+            begin="indefinite"
+            dur="500ms"
+            attributeName="fill"
+            to="#ff6161"
+            from="#ffcece"
+            fill="freeze"
+          />
+        </path>
+        <circle
+          class="end-animation"
+          cx={0}
+          cy={0}
+          r={clockRadius / 2}
+          stroke-width={clockRadius}
+        >
+          <animate
+            class="animation--end"
+            {...endAnimationAttributes}
+            attributeName="stroke-dasharray"
+            values={
+              `0 ${clockRadius * Math.PI};` +
+              `${clockRadius * Math.PI} 0;` +
+              `${clockRadius * Math.PI} ${clockRadius * Math.PI}`
+            }
+          />
+          <animate
+            class="animation--end"
+            {...endAnimationAttributes}
+            attributeName="stroke-dashoffset"
+            values={
+              "0;" +
+              "0;" +
+              (originalTime / this.totalTime - 1) * clockRadius * Math.PI
+            }
+          />
+          <animate
+            class="animation--end"
+            {...endAnimationAttributes}
+            attributeName="stroke"
+            values="#ff6161;#ff6161;#ffcece"
+          />
+        </circle>
+        <circle class="inner-negative" cx={0} cy={0} r={0}>
+          <animate
+            class="animation--running-paused animation--running-ready"
+            begin="indefinite"
+            dur="500ms"
+            calcMode="spline"
+            keyTimes="0;1"
+            keySplines="0 0 0 1"
+            attributeName="r"
+            values={"0;" + innerClockRadius}
+            fill="freeze"
+          />
+          <animate
+            class="animation--ready-running animation--paused-running"
+            begin="indefinite"
+            dur="500ms"
+            calcMode="spline"
+            keyTimes="0;1"
+            keySplines="1 0 1 1"
+            attributeName="r"
+            values={innerClockRadius + ";0"}
+            fill="freeze"
+          />
+          <animate
+            class="animation--end"
+            {...endAnimationAttributes}
+            attributeName="r"
+            values={"0;0;" + innerClockRadius}
+          />
+        </circle>
+        <circle class="middleDot" cx={0} cy={0} r={1} />
+        {ticks}
+        {model.state === STATE.READY && interactiveSegments}
+        {model.state !== STATE.READY && (
           <circle
-            class="end-animation"
+            class="disabled-click-overlay"
             cx={0}
             cy={0}
-            r={clockRadius / 2}
-            stroke-width={clockRadius}
-          >
-            <animate
-              class="animation--end"
-              {...endAnimationAttributes}
-              attributeName="stroke-dasharray"
-              values={
-                `0 ${clockRadius * Math.PI};` +
-                `${clockRadius * Math.PI} 0;` +
-                `${clockRadius * Math.PI} ${clockRadius * Math.PI}`
-              }
-            />
-            <animate
-              class="animation--end"
-              {...endAnimationAttributes}
-              attributeName="stroke-dashoffset"
-              values={
-                "0;" +
-                "0;" +
-                (originalTime / this.totalTime - 1) * clockRadius * Math.PI
-              }
-            />
-            <animate
-              class="animation--end"
-              {...endAnimationAttributes}
-              attributeName="stroke"
-              values="#ff6161;#ff6161;#ffcece"
-            />
-          </circle>
-          <circle class="inner-negative" cx={0} cy={0} r={0}>
-            <animate
-              class="animation--running-paused animation--running-ready"
-              begin="indefinite"
-              dur="500ms"
-              calcMode="spline"
-              keyTimes="0;1"
-              keySplines="0 0 0 1"
-              attributeName="r"
-              values={"0;" + innerClockRadius}
-              fill="freeze"
-            />
-            <animate
-              class="animation--ready-running animation--paused-running"
-              begin="indefinite"
-              dur="500ms"
-              calcMode="spline"
-              keyTimes="0;1"
-              keySplines="1 0 1 1"
-              attributeName="r"
-              values={innerClockRadius + ";0"}
-              fill="freeze"
-            />
-            <animate
-              class="animation--end"
-              {...endAnimationAttributes}
-              attributeName="r"
-              values={"0;0;" + innerClockRadius}
-            />
-          </circle>
-          <circle class="middleDot" cx={0} cy={0} r={1} />
-          {ticks}
-          {model.state === STATE.READY && interactiveSegments}
-          {model.state !== STATE.READY && (
-            <circle
-              class="disabled-click-overlay"
-              cx={0}
-              cy={0}
-              r={clockRadius}
-              onclick={model.clickOnDisabled}
-            />
-          )}
-        </g>
+            r={clockRadius}
+            onclick={model.clickOnDisabled}
+          />
+        )}
       </svg>
     );
   },
