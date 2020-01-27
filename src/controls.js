@@ -47,3 +47,72 @@ export default {
     );
   }
 };
+
+function timeStep(time) {
+  if (time < 60 * 1000) return 1000;
+  return 60 * 1000;
+}
+
+document.onkeyup = function(e) {
+  if (e.key === " ") {
+    if (model.state === STATE.READY) {
+      model.start();
+      return;
+    }
+    if (model.state === STATE.RUNNING) {
+      model.pause();
+      m.redraw();
+      return;
+    }
+    if (model.state === STATE.PAUSED) {
+      model.resume();
+      return;
+    }
+  }
+  if (e.key === "Escape") {
+    model.reset();
+    m.redraw();
+    return;
+  }
+};
+
+document.onkeydown = function(e) {
+  if (e.key === " ") {
+    if (model.state === STATE.READY) {
+      document.getElementById("run").focus();
+      return;
+    }
+    if (model.state === STATE.RUNNING) {
+      document.getElementById("pause").focus();
+      return;
+    }
+    if (model.state === STATE.PAUSED) {
+      document.getElementById("run").focus();
+      return;
+    }
+  }
+  if (e.key === "Escape") {
+    document.getElementById("reset").focus();
+    return;
+  }
+  if (model.state === STATE.READY) {
+    if (e.key === "ArrowUp") {
+      if (model.intermediateOriginalTime)
+        model.intermediateOriginalTime += timeStep(
+          model.intermediateOriginalTime
+        );
+      else model.originalTime += timeStep(model.originalTime);
+      m.redraw();
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      if (model.intermediateOriginalTime)
+        model.intermediateOriginalTime -= timeStep(
+          --model.intermediateOriginalTime
+        );
+      else model.originalTime -= timeStep(--model.originalTime);
+      m.redraw();
+      return;
+    }
+  }
+};
