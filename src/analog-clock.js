@@ -152,7 +152,7 @@ const clock = {
           d={`
             M 0 ${-clockRadius}
             ${drawArc(clockRadius, originalTime / this.totalTime)}
-            ${drawArc(innerClockRadius, originalTime / this.totalTime, true)}
+            L 0 0
           `}
         >
           <animate
@@ -223,7 +223,7 @@ const clock = {
             values="#ff6161;#ff6161;#ffcece"
           />
         </circle>
-        <circle class="inner-negative" cx={0} cy={0} r={0}>
+        <circle class="inner-negative" cx={0} cy={0} r={innerClockRadius}>
           <animate
             class="animation--running-paused animation--running-ready"
             begin="indefinite"

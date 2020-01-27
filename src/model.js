@@ -59,7 +59,6 @@ const model = {
   reset: function() {
     const oldState = model.state;
     model.state = STATE.READY;
-    model.timeLeft = 0;
     clearTimeout(model.timeoutEnd);
     clearInterval(model.timeoutCountdown);
     if (model.timeLeft > 1000) model.animateElements(oldState);
