@@ -71,7 +71,11 @@ const clock = {
       ${drawArc(clockRadius, this.tickFrequency / this.totalTime)}
       ${drawArc(innerClockRadius, this.tickFrequency / this.totalTime, true)}
     `;
-    for (let time = 0; time <= this.totalTime; time += this.tickFrequency) {
+    for (
+      let time = this.tickFrequency;
+      time <= this.totalTime;
+      time += this.tickFrequency
+    ) {
       const rotation = -time * (360 / this.totalTime);
       const majorTick = !(time % this.majorTickFrequency);
       ticks.push(
@@ -104,7 +108,7 @@ const clock = {
           />
         );
       }
-      if (!majorTick || time === this.totalTime) {
+      if (!majorTick) {
         continue;
       }
       const labelText = (time / this.labelUnit).toString();
