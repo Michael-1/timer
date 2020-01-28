@@ -79,6 +79,9 @@ const input = {
             onkeyup={function(e) {
               e.stopPropagation();
             }}
+            onkeydown={function(e) {
+              e.stopPropagation();
+            }}
             inputmode="decimal"
             disabled={model.state !== STATE.READY}
           />
