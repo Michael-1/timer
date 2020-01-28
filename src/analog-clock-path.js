@@ -8,10 +8,6 @@ module.exports = {
     });
   },
   view: function(vnode) {
-    return m(
-      "line",
-      vnode.attrs,
-      vnode.children
-    );
+    return m("path", vnode.attrs, vnode.children);
   }
 };

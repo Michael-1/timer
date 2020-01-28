@@ -1,7 +1,7 @@
 import m from "mithril";
 import { model, STATE } from "./model";
-import Line from "./analog-clock-tick";
-import Label from "./analog-clock-label";
+import FadingPath from "./analog-clock-path";
+import FadingLabel from "./analog-clock-label";
 
 import "./analog-clock.scss";
 
@@ -60,7 +60,6 @@ const clock = {
     // Define sources
     let originalTime =
       model.intermediateOriginalTime || model.originalTime || 0;
-    if (originalTime === this.totalTime) originalTime--;
     let timeLeft = model.timeLeft || 0;
     if (timeLeft === this.totalTime) timeLeft--;
 
@@ -76,16 +75,15 @@ const clock = {
       const rotation = -time * (360 / this.totalTime);
       const majorTick = !(time % this.majorTickFrequency);
       ticks.push(
-        <Line
+        <FadingPath
           class={`tick ${majorTick ? "major" : ""}`}
-          x1={0}
-          y1={-clockRadius}
-          x2={0}
-          y2={
-            -clockRadius +
-            (!majorTick && (time / this.labelUnit) % 5
-              ? minorTickSize
-              : majorTickSize)
+          d={
+            `M 0 ${-clockRadius}` +
+            `v ${
+              !majorTick && (time / this.labelUnit) % 5
+                ? minorTickSize
+                : majorTickSize
+            }`
           }
           style={`transform:rotate(${rotation}deg)`}
           key={"line_" + time}
@@ -124,7 +122,7 @@ const clock = {
           1
       };
       ticks.push(
-        <Label
+        <FadingLabel
           key={"label_" + time + "_" + labelText}
           x={textPosition.x}
           y={textPosition.y}
@@ -140,7 +138,7 @@ const clock = {
             : {})}
         >
           {labelText}
-        </Label>
+        </FadingLabel>
       );
     }
 
@@ -182,10 +180,73 @@ const clock = {
             stroke-width={outerClockRadius}
             stroke-dasharray={outerClockRadius * Math.PI}
             stroke-dashoffset={
-              (originalTime / this.totalTime) * outerClockRadius * Math.PI
+              (originalTime < this.totalTime
+                ? originalTime / this.totalTime
+                : 1 - Number.EPSILON) * // –ε fights layout bug in Chrome
+              outerClockRadius *
+              Math.PI
             }
           />
         </g>
+        {originalTime > this.totalTime && (
+          <FadingPath
+            class="overshoot-indicator"
+            d={
+              `M 0 ${-outerClockRadius}` +
+              `v ${minorTickSize + 2}` +
+              `A ${innerClockRadius - 1} ${innerClockRadius - 1} 0 0 1 ` +
+              polarToCartesian(
+                innerClockRadius - 1,
+                -minorTickSize / (clockRadius * 2 * Math.PI)
+              ) +
+              // First arrow
+              `L ${polarToCartesian(
+                clockRadius - minorTickSize / 2,
+                -(minorTickSize * 0.5) / (clockRadius * 2 * Math.PI)
+              )}` +
+              `L ${polarToCartesian(
+                outerClockRadius,
+                -minorTickSize / (clockRadius * 2 * Math.PI)
+              )}` +
+              `A ${outerClockRadius} ${outerClockRadius} 0 0 0 0 ${-outerClockRadius}` +
+              "Z" +
+              `M ` +
+              polarToCartesian(
+                outerClockRadius,
+                (-minorTickSize * 1.5) / (clockRadius * 2 * Math.PI)
+              ) +
+              // Second arrow
+              `L ${polarToCartesian(
+                clockRadius - minorTickSize / 2,
+                (-minorTickSize * 1.0) / (clockRadius * 2 * Math.PI)
+              )}` +
+              `L ${polarToCartesian(
+                innerClockRadius - 1,
+                (-minorTickSize * 1.5) / (clockRadius * 2 * Math.PI)
+              )}` +
+              `A ${innerClockRadius - 1} ${innerClockRadius - 1} 0 0 1 ` +
+              polarToCartesian(
+                innerClockRadius - 1,
+                (-minorTickSize * 2.0) / (clockRadius * 2 * Math.PI)
+              ) +
+              // Third arrow
+              `L ${polarToCartesian(
+                clockRadius - minorTickSize / 2,
+                (-minorTickSize * 1.5) / (clockRadius * 2 * Math.PI)
+              )}` +
+              `L ${polarToCartesian(
+                outerClockRadius,
+                (-minorTickSize * 2.0) / (clockRadius * 2 * Math.PI)
+              )}` +
+              `A ${outerClockRadius} ${outerClockRadius} 0 0 0 ` +
+              polarToCartesian(
+                outerClockRadius,
+                (-minorTickSize * 1.0) / (clockRadius * 2 * Math.PI)
+              ) +
+              "Z"
+            }
+          />
+        )}
         <path
           class="timeLeft"
           d={`
@@ -313,7 +374,10 @@ const polarToCartesian = function(radius, angle) {
   const rad = angle * (2 * Math.PI);
   return {
     x: -radius * Math.sin(rad),
-    y: -radius * Math.cos(rad)
+    y: -radius * Math.cos(rad),
+    toString: function() {
+      return this.x + " " + this.y;
+    }
   };
 };
 

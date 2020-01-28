@@ -44,7 +44,8 @@
       transition-delay: 0ms;
     }
   }
-  .inner-negative {
+  .inner-negative,
+  .overshoot-indicator {
     fill: white;
   }
   .middleDot {
@@ -73,9 +74,9 @@
     &.fade {
       animation: fade 500ms forwards;
     }
-    &.fade-collapse {
-      animation: fade 1000ms forwards;
-    }
+  }
+  .overshoot-indicator.fade {
+    animation: fade 500ms 500ms forwards;
   }
 
   .interactive-segment {
