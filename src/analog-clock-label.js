@@ -54,9 +54,12 @@ module.exports = {
               keySplines="0.25 0.1 0.25 1.0"
               path={
                 `M ${relOldPoint.x} ${relOldPoint.y}` +
-                `A 35.5 35.5 0 0 ${
-                  this.oldAttrs["x"] < vnode.attrs["x"] ? 0 : 1
-                } 0 0`
+                `A 35.5 35.5 0 ${
+                  vnode.attrs["data-time"] === vnode.attrs["data-totaltime"] ||
+                  this.oldAttrs["data-time"] === this.oldAttrs["data-totaltime"]
+                    ? 1
+                    : 0
+                } ${this.oldAttrs["x"] < vnode.attrs["x"] ? 0 : 1} 0 0`
               }
             />
           ]
