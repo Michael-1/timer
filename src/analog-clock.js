@@ -9,6 +9,7 @@ const clockRadius = 50;
 const majorTickSize = clockRadius / 5;
 const minorTickSize = majorTickSize - 1;
 const innerClockRadius = clockRadius - minorTickSize;
+const outerClockRadius = clockRadius + 1;
 const labelFontSize = 7;
 
 const SECOND = 1000;
@@ -20,6 +21,13 @@ const clock = {
   tickFrequency: MINUTE,
   majorTickFrequency: 5 * MINUTE,
   labelUnit: MINUTE,
+
+  interactionsOn: true,
+
+  onbeforeupdate: function(vnode, old) {
+    if (vnode.state.totalTime !== old.state.totalTime)
+      clock.interactionsOn = false;
+  },
 
   view: function() {
     // Clock scaling
@@ -92,7 +100,7 @@ const clock = {
             transform={`rotate(${-(time - this.tickFrequency / 2) *
               (360 / this.totalTime)})`}
             onmouseenter={clock.setIntermediateTime}
-            onmouseleave={model.resetIntermediateTime}
+            onmouseleave={clock.resetIntermediateTime}
             onclick={clock.setTime}
             data-time={time}
           />
@@ -147,21 +155,33 @@ const clock = {
         viewBox={`${-clockRadius} ${-clockRadius} ${clockRadius *
           2} ${clockRadius * 2}`}
       >
-        <path
-          class="originalTime"
-          d={`
-            M 0 ${-clockRadius}
-            ${drawArc(clockRadius, originalTime / this.totalTime)}
-            L 0 0
-          `}
+        {" "}
+        <g
+          class={
+            "originalTime" +
+            (model.intermediateOriginalTime ? " intermediate" : "")
+          }
         >
-          <animate
-            class="animation--end"
-            {...endAnimationAttributes}
-            attributeName="fill"
-            values="transparent;transparent;#ffcece"
+          <circle cx={0} cy={0} r={clockRadius}>
+            <animate
+              class="animation--end"
+              {...endAnimationAttributes}
+              attributeName="fill"
+              values="transparent;transparent;#ffcece"
+            />
+          </circle>
+          <circle
+            class="negative"
+            cx={0}
+            cy={0}
+            r={outerClockRadius / 2}
+            stroke-width={outerClockRadius}
+            stroke-dasharray={outerClockRadius * Math.PI}
+            stroke-dashoffset={
+              (originalTime / this.totalTime) * outerClockRadius * Math.PI
+            }
           />
-        </path>
+        </g>
         <path
           class="timeLeft"
           d={`
@@ -251,6 +271,7 @@ const clock = {
             {...endAnimationAttributes}
             attributeName="r"
             values={"0;0;" + innerClockRadius}
+            fill="freeze"
           />
         </circle>
         <circle class="middleDot" cx={0} cy={0} r={1} />
@@ -274,7 +295,13 @@ const clock = {
   },
 
   setIntermediateTime: function() {
-    model.setIntermediateTime(parseInt(this.dataset.time));
+    if (clock.interactionsOn)
+      model.setIntermediateTime(parseInt(this.dataset.time));
+  },
+
+  resetIntermediateTime: function() {
+    clock.interactionsOn = true;
+    model.resetIntermediateTime();
   }
 };
 

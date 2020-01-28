@@ -34,6 +34,15 @@
     .state--running & {
       opacity: 0;
     }
+    .negative {
+      fill: none;
+      stroke: white;
+      transform: rotate(-90deg);
+      transition: stroke-dashoffset 500ms 500ms;
+    }
+    &.intermediate .negative {
+      transition-delay: 0ms;
+    }
   }
   .inner-negative {
     fill: white;
