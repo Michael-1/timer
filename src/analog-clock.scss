@@ -52,7 +52,7 @@
         transition: stroke-dashoffset 500ms 500ms;
       }
       &.intermediate .negative {
-        transition-delay: 0ms;
+        transition: stroke-dashoffset 200ms 0ms;
       }
     }
     .inner-negative,
@@ -64,7 +64,6 @@
     }
     text {
       text-anchor: middle;
-      dominant-baseline: middle;
       font-size: 7px;
       font-variant-numeric: proportional-nums;
       user-select: none;

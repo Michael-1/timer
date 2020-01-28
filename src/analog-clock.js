@@ -127,7 +127,7 @@ const clock = {
         y:
           -(clockRadius - majorTickSize - labelFontSize / 2 - 2) *
             Math.cos((-rotation / 360) * (2 * Math.PI)) +
-          1
+          2.7
       };
       ticks.push(
         <FadingLabel
