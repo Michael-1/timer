@@ -53,30 +53,34 @@ function timeStep(time) {
   return 60 * 1000;
 }
 
-document.onkeyup = function(e) {
+onkeyup = function(e) {
   if (e.key === " ") {
     if (model.state === STATE.READY) {
+      document.getElementById("run").blur();
       model.start();
       return;
     }
     if (model.state === STATE.RUNNING) {
+      document.getElementById("pause").blur();
       model.pause();
       m.redraw();
       return;
     }
     if (model.state === STATE.PAUSED) {
+      document.getElementById("run").blur();
       model.resume();
       return;
     }
   }
   if (e.key === "Escape") {
+    document.getElementById("reset").blur();
     model.reset();
     m.redraw();
     return;
   }
 };
 
-document.onkeydown = function(e) {
+onkeydown = function(e) {
   if (e.key === " ") {
     if (model.state === STATE.READY) {
       document.getElementById("run").focus();

@@ -14,8 +14,7 @@ const model = {
   timeLeft: null,
   endTime: null,
 
-  timeoutCountdown: null,
-  timeoutEnd: null,
+  timeouts: [],
 
   setTime: function(time) {
     model.originalTime = time;
@@ -36,11 +35,10 @@ const model = {
   },
 
   pause: function() {
+    model.clearTimeouts();
     const oldState = model.state;
     model.state = STATE.PAUSED;
     model.timeLeft = model.endTime - Date.now();
-    window.clearTimeout(model.timeoutEnd);
-    window.clearTimeout(model.timeoutCountdown);
     model.animateElements(oldState);
   },
 
@@ -52,33 +50,40 @@ const model = {
     const oldState = model.state;
     model.state = STATE.RUNNING;
     model.endTime = Date.now() + model.timeLeft;
-    model.countdown();
-    model.timeoutEnd = window.setTimeout(function() {
-      new Audio("bell.ogg").play();
-      model.timeLeft = 0;
-      model.reset();
-      m.redraw();
-      for (let el of document.getElementsByClassName(`animation--end`))
-        el.beginElement();
-    }, model.timeLeft);
+    model.timeouts.push(
+      setTimeout(function() {
+        model.timeouts.push(
+          setInterval(function() {
+            model.timeLeft = model.endTime - Date.now();
+            m.redraw();
+          }, 1000)
+        );
+        model.timeLeft = model.endTime - Date.now();
+        m.redraw();
+      }, model.timeLeft % 1000)
+    );
+    model.timeouts.push(
+      setTimeout(function() {
+        new Audio("bell.ogg").play();
+        model.timeLeft = 0;
+        model.reset();
+        m.redraw();
+        for (let el of document.getElementsByClassName(`animation--end`))
+          el.beginElement();
+      }, model.timeLeft)
+    );
     model.animateElements(oldState);
   },
 
-  countdown: function() {
-    model.timeLeft = model.endTime - Date.now();
-    m.redraw();
-    model.timeoutCountdown = window.setTimeout(
-      model.countdown,
-      model.timeLeft % 1000
-    );
-  },
-
   reset: function() {
+    model.clearTimeouts();
     const oldState = model.state;
     model.state = STATE.READY;
-    window.clearTimeout(model.timeoutEnd);
-    window.clearTimeout(model.timeoutCountdown);
     if (model.timeLeft > 1000) model.animateElements(oldState);
+  },
+
+  clearTimeouts: function() {
+    while ((timeout = this.timeouts.pop())) clearTimeout(timeout);
   },
 
   clickOnDisabled: function() {
