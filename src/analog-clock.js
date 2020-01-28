@@ -109,16 +109,20 @@ const clock = {
       if (!majorTick || time === this.totalTime) {
         continue;
       }
+      const labelText = (time / this.labelUnit).toString();
       const textPosition = {
         x:
-          -(clockRadius - majorTickSize - labelFontSize / 2 - 3) *
-          Math.sin((-rotation / 360) * (2 * Math.PI)),
+          -(
+            clockRadius -
+            majorTickSize -
+            labelFontSize * labelText.length * 0.3 -
+            3
+          ) * Math.sin((-rotation / 360) * (2 * Math.PI)),
         y:
           -(clockRadius - majorTickSize - labelFontSize / 2 - 2) *
             Math.cos((-rotation / 360) * (2 * Math.PI)) +
           1
       };
-      const labelText = time / this.labelUnit;
       ticks.push(
         <Label
           key={"label_" + time + "_" + labelText}
