@@ -1,96 +1,115 @@
 @import "variables";
 
 #analog-clock {
-  shape-rendering: geometricPrecision;
-
-  height: 100%;
-  .layout--square,
-  .layout--high & {
+  position: relative;
+  .layout--wide & {
+    height: 100%;
+  }
+  .layout--high &,
+  .layout--square & {
     width: 100%;
   }
 
-  .tick {
-    stroke: black;
-    stroke-width: 0.1;
-    transition: stroke-width 500ms 500ms, transform 500ms 500ms;
-    &.major {
-      stroke-width: 0.5;
-      transition: stroke-width 1000ms 500ms, transform 500ms 500ms;
+  > svg {
+    shape-rendering: geometricPrecision;
+
+    height: 100%;
+    max-height: 90vh;
+    .layout--square &,
+    .layout--high & {
+      width: 100%;
     }
-  }
-  .timeLeft {
-    fill: $color-primary;
-    opacity: 1;
-    transition: opacity 0ms;
-    .state--ready & {
+
+    .tick {
+      stroke: black;
+      stroke-width: 0.1;
+      transition: stroke-width 500ms 500ms, transform 500ms 500ms;
+      &.major {
+        stroke-width: 0.5;
+        transition: stroke-width 1000ms 500ms, transform 500ms 500ms;
+      }
+    }
+    .timeLeft {
+      fill: $color-primary;
+      opacity: 1;
+      transition: opacity 0ms;
+      .state--ready & {
+        opacity: 0;
+        transition: opacity 0ms 500ms;
+      }
+    }
+    .originalTime {
+      fill: $color-primary-light;
+      transition: opacity 500ms;
+      opacity: 1;
+      .state--running & {
+        opacity: 0;
+      }
+      .negative {
+        fill: none;
+        stroke: white;
+        transform: rotate(-90deg);
+        transition: stroke-dashoffset 500ms 500ms;
+      }
+      &.intermediate .negative {
+        transition-delay: 0ms;
+      }
+    }
+    .inner-negative,
+    .overshoot-indicator {
+      fill: white;
+    }
+    .middleDot {
+      fill: black;
+    }
+    text {
+      text-anchor: middle;
+      dominant-baseline: middle;
+      font-size: 7px;
+      font-variant-numeric: proportional-nums;
+      user-select: none;
+      cursor: default;
+      &.interactive {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+    }
+
+    text,
+    .tick {
       opacity: 0;
-      transition: opacity 0ms 500ms;
+      animation: appear 500ms 1000ms forwards;
+      .initial & {
+        animation-duration: 0ms;
+      }
+      &.fade {
+        animation: fade 500ms forwards;
+      }
     }
-  }
-  .originalTime {
-    fill: $color-primary-light;
-    transition: opacity 500ms;
-    opacity: 1;
-    .state--running & {
-      opacity: 0;
+    .overshoot-indicator.fade {
+      animation: fade 500ms 500ms forwards;
     }
-    .negative {
-      fill: none;
-      stroke: white;
-      transform: rotate(-90deg);
-      transition: stroke-dashoffset 500ms 500ms;
-    }
-    &.intermediate .negative {
-      transition-delay: 0ms;
-    }
-  }
-  .inner-negative,
-  .overshoot-indicator {
-    fill: white;
-  }
-  .middleDot {
-    fill: black;
-  }
-  text {
-    text-anchor: middle;
-    dominant-baseline: middle;
-    font-size: 7px;
-    font-variant-numeric: proportional-nums;
-    user-select: none;
-    cursor: default;
-    &.interactive {
+
+    .interactive-segment {
+      fill: transparent;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-  }
 
-  text,
-  .tick {
-    opacity: 0;
-    animation: appear 500ms 1000ms forwards;
-    .initial & {
-      animation-duration: 0ms;
+    .disabled-click-overlay {
+      fill: transparent;
     }
-    &.fade {
-      animation: fade 500ms forwards;
+
+    .end-animation {
+      fill: none;
+      transform: rotate(-90deg);
     }
   }
-  .overshoot-indicator.fade {
-    animation: fade 500ms 500ms forwards;
-  }
+}
 
-  .interactive-segment {
-    fill: transparent;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .disabled-click-overlay {
-    fill: transparent;
-  }
-
-  .end-animation {
-    fill: none;
-    transform: rotate(-90deg);
-  }
+button#expand {
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  transform: translateX(-50%);
 }

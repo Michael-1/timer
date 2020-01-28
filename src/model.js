@@ -11,6 +11,7 @@ const model = {
   highlightOnDisabledClick: false,
   originalTime: null,
   intermediateOriginalTime: null,
+  manualTotalTime: null,
   timeLeft: null,
   endTime: null,
 
@@ -18,6 +19,7 @@ const model = {
 
   setTime: function(time) {
     model.originalTime = time;
+    model.manualTotalTime = null;
     model.resetIntermediateTime();
   },
 
