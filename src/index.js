@@ -1,5 +1,5 @@
 import m from "mithril";
-import { model, STATE } from "./model";
+import { model } from "./model";
 import AnalogClock from "./analog-clock";
 import DigitalClock from "./digital-clock";
 import Controls from "./controls";
@@ -17,6 +17,12 @@ window.onresize = function(event) {
 };
 
 const layout = {
+  initialRendering: true,
+
+  onupdate: function() {
+    this.initialRendering = false;
+  },
+
   view: function() {
     const doc = document.documentElement;
     let layout = LAYOUT.SQUARE;
@@ -24,9 +30,13 @@ const layout = {
     if (doc.clientWidth * 4 < doc.clientHeight * 3) layout = LAYOUT.HIGH;
     return (
       <div
-        class={`layout layout--${layout} state--${model.state} ${
-          model.highlightOnDisabledClick ? "click-on-disabled-flash" : ""
-        }`}
+        class={
+          "layout " +
+          `layout--${layout} ` +
+          `state--${model.state} ` +
+          (model.highlightOnDisabledClick ? "click-on-disabled-flash " : "") +
+          (this.initialRendering ? "initial" : "")
+        }
         style={`height:${doc.clientHeight}px`}
       >
         <AnalogClock />

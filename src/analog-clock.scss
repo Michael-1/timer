@@ -67,6 +67,9 @@
   .tick {
     opacity: 0;
     animation: appear 500ms 1000ms forwards;
+    .initial & {
+      animation: appear 0ms forwards;
+    }
     &.fade {
       animation: fade 500ms forwards;
     }
