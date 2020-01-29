@@ -59,7 +59,12 @@ module.exports = {
                   this.oldAttrs["data-time"] === this.oldAttrs["data-totaltime"]
                     ? 1
                     : 0
-                } ${this.oldAttrs["x"] < vnode.attrs["x"] ? 0 : 1} 0 0`
+                } ${
+                  this.oldAttrs["data-totaltime"] >
+                  vnode.attrs["data-totaltime"]
+                    ? 0
+                    : 1
+                } 0 0`
               }
             />
           ]
