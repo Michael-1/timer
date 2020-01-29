@@ -18,6 +18,7 @@ const HOUR = 60 * MINUTE;
 
 const clock = {
   totalTime: HOUR,
+  previousTotalTime: HOUR,
   tickFrequency: MINUTE,
   majorTickFrequency: 5 * MINUTE,
   labelUnit: MINUTE,
@@ -59,6 +60,12 @@ const clock = {
         clock.majorTickFrequency = 15 * SECOND;
         clock.labelUnit = SECOND;
       }
+    }
+
+    let isZooming = false;
+    if (clock.totalTime !== clock.previousTotalTime) {
+      isZooming = true;
+      clock.previousTotalTime = clock.totalTime;
     }
 
     // Define sources
@@ -169,7 +176,8 @@ const clock = {
           <g
             class={
               "originalTime" +
-              (model.intermediateOriginalTime ? " intermediate" : "")
+              (model.intermediateOriginalTime ? " intermediate" : "") +
+              (isZooming ? " zooming" : "")
             }
           >
             <circle cx={0} cy={0} r={clockRadius}>

@@ -49,10 +49,13 @@
         fill: none;
         stroke: white;
         transform: rotate(-90deg);
-        transition: stroke-dashoffset 500ms 500ms;
+        transition: stroke-dashoffset 500ms 0ms;
       }
       &.intermediate .negative {
         transition: stroke-dashoffset 200ms 0ms;
+      }
+      &.zooming .negative {
+        transition: stroke-dashoffset 500ms 500ms;
       }
     }
     .inner-negative,

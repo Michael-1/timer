@@ -35,7 +35,7 @@ button {
     &:active {
       box-shadow: $highlight-press;
       path {
-        fill: $color-primary;
+        fill: $color-primary-dark;
       }
     }
   }
