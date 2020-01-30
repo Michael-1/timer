@@ -15,7 +15,9 @@ module.exports = {
       logo: "./favicon.svg",
       favicons: {
         appName: "Timer",
+        developerName: "Michael Schmid",
         appleStatusBarStyle: "default",
+        theme_color: "#ff6161",
         icons: {
           coast: false,
           yandex: false
