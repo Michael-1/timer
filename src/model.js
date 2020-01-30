@@ -66,7 +66,7 @@ const model = {
     );
     model.timeouts.push(
       setTimeout(function() {
-        new Audio("bell.ogg").play();
+        new Audio("audio/bell.ogg").play();
         model.timeLeft = 0;
         model.reset();
         m.redraw();
