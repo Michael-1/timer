@@ -1,30 +1,8 @@
 const path = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const FaviconsWebpackPlugin = require("favicons-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
-  plugins: [
-    new HtmlWebpackPlugin({
-      hash: true,
-      inject: "body",
-      title: "Timer",
-      meta: { viewport: "width=device-width" },
-      template: "./index.html"
-    }),
-    new FaviconsWebpackPlugin({
-      logo: "./favicon.svg",
-      favicons: {
-        appName: "Timer",
-        developerName: "Michael Schmid",
-        appleStatusBarStyle: "default",
-        theme_color: "#ff6161",
-        icons: {
-          coast: false,
-          yandex: false
-        }
-      }
-    })
-  ],
+  plugins: [new MiniCssExtractPlugin()],
   module: {
     rules: [
       {
@@ -37,7 +15,7 @@ module.exports = {
       {
         test: /\.s?css$/,
         exclude: /\/node_modules\//,
-        use: ["style-loader", "css-loader", "sass-loader"]
+        use: [MiniCssExtractPlugin.loader, "css-loader", "sass-loader"]
       }
     ]
   }
