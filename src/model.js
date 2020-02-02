@@ -1,4 +1,6 @@
-var m = require("mithril");
+const m = require("mithril");
+
+const bell = require("../assets/audio/bell.ogg");
 
 const STATE = {
   READY: "ready",
@@ -66,7 +68,7 @@ const model = {
     );
     model.timeouts.push(
       setTimeout(function() {
-        new Audio("audio/bell.ogg").play();
+        new Audio(bell).play();
         model.timeLeft = 0;
         model.reset();
         m.redraw();

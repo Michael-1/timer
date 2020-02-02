@@ -16,6 +16,22 @@ module.exports = {
         test: /\.s?css$/,
         exclude: /\/node_modules\//,
         use: [MiniCssExtractPlugin.loader, "css-loader", "sass-loader"]
+      },
+      {
+        test: /\.(ogg|mp3)$/,
+        loader: "file-loader",
+        options: {
+          name: "[name].[hash].[ext]",
+          outputPath: "audio"
+        }
+      },
+      {
+        test: /\.(png)$/,
+        loader: "file-loader",
+        options: {
+          name: "[name].[hash].[ext]",
+          outputPath: "img"
+        }
       }
     ]
   }
