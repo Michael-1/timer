@@ -6,8 +6,7 @@
   "repository": "https://github.com/Michael-1/timer",
   "scripts": {
     "start": "webpack-dev-server --config webpack.dev.js",
-    "build": "webpack --config webpack.prod.js",
-    "deploy": "aws s3 sync dist s3://timer.pizza"
+    "build": "webpack --config webpack.prod.js"
   },
   "dependencies": {
     "mithril": "^2.0.3",
