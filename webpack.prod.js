@@ -1,3 +1,4 @@
+const path = require("path");
 const merge = require("webpack-merge");
 const baseConfig = require("./webpack.common.js");
 
@@ -8,6 +9,9 @@ const SocialTags = require("social-tags-webpack-plugin");
 
 module.exports = merge(baseConfig, {
   mode: "production",
+  output: {
+    path: path.resolve(__dirname, "../timer-dist")
+  },
   plugins: [
     new HtmlWebpackPlugin({
       inject: "body",
