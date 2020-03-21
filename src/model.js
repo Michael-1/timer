@@ -66,6 +66,7 @@ const model = {
         m.redraw();
       }, model.timeLeft % 1000)
     );
+    document.getElementById("time-input").blur();
     model.timeouts.push(
       setTimeout(function() {
         new Audio(bell).play();

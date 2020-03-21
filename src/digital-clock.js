@@ -74,6 +74,7 @@ const input = {
             : {})}
         >
           <input
+            id="time-input"
             list="presets"
             value={text}
             oninput={input.setIntermediateTime}
