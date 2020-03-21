@@ -122,7 +122,10 @@ const clock = {
       if (!majorTick) {
         continue;
       }
-      const labelText = (time / clock.labelUnit).toString();
+      const labelText =
+        time === this.totalTime && model.state !== STATE.READY
+          ? 0
+          : (time / clock.labelUnit).toString();
       const textPosition = {
         x:
           -(

@@ -80,13 +80,22 @@
     text,
     .tick {
       opacity: 0;
-      animation: appear 500ms 1000ms forwards;
+      .state--ready & {
+        animation: appear 500ms 1000ms forwards;
+        &.fade {
+          animation: fade 500ms forwards;
+        }
+      }
+      .state--running &,
+      .state--paused & {
+        animation: appear 500ms forwards;
+        &.fade {
+          animation: fade 500ms forwards;
+        }
+      }
       .initial & {
         animation-duration: 1ms;
         animation-delay: 0ms;
-      }
-      &.fade {
-        animation: fade 500ms forwards;
       }
     }
     .overshoot-indicator.fade {
