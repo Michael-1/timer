@@ -70,7 +70,7 @@ const clock = {
 
     // Define sources
     let originalTime =
-      model.intermediateOriginalTime || model.originalTime || 0;
+      model.originalTime || model.intermediateOriginalTime || 0;
     let timeLeft = model.timeLeft || 0;
     if (timeLeft === clock.totalTime) timeLeft--;
 
