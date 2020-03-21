@@ -68,6 +68,9 @@
     line-height: 1.4em;
     font-variant-numeric: tabular-nums;
   }
+  input::-webkit-list-button {
+    order: -1;
+  }
 
   .state--running &,
   .state--paused & {
