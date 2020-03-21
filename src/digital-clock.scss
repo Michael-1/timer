@@ -9,7 +9,7 @@
     width: 8ch;
     transition: width 1000ms;
     min-height: 1.4em;
-    font-weight: 600;
+    font-weight: 601; // 600 renders “7” incorrectly with Segoe
   }
   .colon-prefix::before {
     content: ":";
@@ -67,6 +67,7 @@
     margin: 0;
     line-height: 1.4em;
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
   }
   input::-webkit-list-button {
     order: -1;
