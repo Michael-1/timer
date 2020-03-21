@@ -17,7 +17,7 @@ export default {
           }
         >
           <svg class="icon" viewBox="0 0 32 32">
-            <path d="M6 4l20 12-20 12z" />
+            <path d="M7 4l20 12-20 12z" />
           </svg>
         </button>
         <button
