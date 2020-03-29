@@ -13,6 +13,7 @@ const model = {
   highlightOnDisabledClick: false,
   originalTime: null,
   intermediateOriginalTime: null,
+  intermediateDigitalOriginalTime: null,
   manualTotalTime: null,
   timeLeft: null,
   endTime: null,
@@ -29,8 +30,13 @@ const model = {
     model.intermediateOriginalTime = time;
   },
 
+  setIntermediateDigitalTime: function(time) {
+    model.intermediateDigitalOriginalTime = time;
+  },
+
   resetIntermediateTime: function() {
     model.intermediateOriginalTime = null;
+    model.intermediateDigitalOriginalTime = null;
   },
 
   start: function() {
@@ -54,18 +60,7 @@ const model = {
     const oldState = model.state;
     model.state = STATE.RUNNING;
     model.endTime = Date.now() + model.timeLeft;
-    model.timeouts.push(
-      setTimeout(function() {
-        model.timeouts.push(
-          setInterval(function() {
-            model.timeLeft = model.endTime - Date.now();
-            m.redraw();
-          }, 1000)
-        );
-        model.timeLeft = model.endTime - Date.now();
-        m.redraw();
-      }, model.timeLeft % 1000)
-    );
+    this.countdown();
     document.getElementById("time-input").blur();
     model.timeouts.push(
       setTimeout(function() {
@@ -78,6 +73,15 @@ const model = {
       }, model.timeLeft)
     );
     model.animateElements(oldState);
+  },
+
+  countdown: function() {
+    model.timeLeft = model.endTime - Date.now();
+    console.debug(model.timeLeft);
+    m.redraw();
+    model.timeouts.push(
+      setTimeout(model.countdown, model.timeLeft % 1000 || 1000)
+    );
   },
 
   reset: function() {
