@@ -119,7 +119,7 @@ const input = {
     input.userInput = this.value.replace(/[\.\,\/]/g, ":");
     const milliseconds = parseInput(input.userInput);
     if (!milliseconds) return;
-    model.setIntermediateTime(milliseconds);
+    model.setIntermediateDigitalTime(milliseconds);
   }
 };
 

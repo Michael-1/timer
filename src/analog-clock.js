@@ -69,8 +69,12 @@ const clock = {
     }
 
     // Define sources
+    console.debug(model);
     let originalTime =
-      model.originalTime || model.intermediateOriginalTime || 0;
+      model.intermediateDigitalOriginalTime ||
+      model.originalTime ||
+      model.intermediateOriginalTime ||
+      0;
     let timeLeft = model.timeLeft || 0;
     if (timeLeft === clock.totalTime) timeLeft--;
 
