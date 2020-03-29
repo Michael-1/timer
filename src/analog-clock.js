@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import m from "mithril";
 import { model, STATE } from "./model";
 import FadingPath from "./analog-clock-path";
@@ -69,7 +70,6 @@ const clock = {
     }
 
     // Define sources
-    console.debug(model);
     let originalTime =
       model.intermediateDigitalOriginalTime ||
       model.originalTime ||
@@ -128,7 +128,7 @@ const clock = {
       }
       const labelText =
         time === this.totalTime && model.state !== STATE.READY
-          ? 0
+          ? "0"
           : (time / clock.labelUnit).toString();
       const textPosition = {
         x:

@@ -1,6 +1,7 @@
-const m = require("mithril");
-const ms = require("ms");
-const { model, STATE } = require("./model");
+// eslint-disable-next-line no-unused-vars
+import m from "mithril";
+import ms from "ms";
+import { model, STATE } from "./model";
 
 import "./digital-clock.scss";
 
@@ -110,13 +111,13 @@ const input = {
 
   setTime: function() {
     input.userInput = null;
-    const milliseconds = parseInput(this.value.replace(/[\.\,\/]/g, ":"));
+    const milliseconds = parseInput(this.value.replace(/[.,/]/g, ":"));
     if (!milliseconds) return;
     model.setTime(milliseconds);
   },
 
   setIntermediateTime: function() {
-    input.userInput = this.value.replace(/[\.\,\/]/g, ":");
+    input.userInput = this.value.replace(/[.,/]/g, ":");
     const milliseconds = parseInput(input.userInput);
     if (!milliseconds) return;
     model.setIntermediateDigitalTime(milliseconds);
@@ -127,7 +128,9 @@ function parseInput(input) {
   let result;
   try {
     result = ms(input);
-  } catch (e) {}
+  } catch (e) {
+    return null;
+  }
   if (result < 0) result = null;
   if (result < 1000) result *= 60000;
   if (result) return result;

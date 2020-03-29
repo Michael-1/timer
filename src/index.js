@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import m from "mithril";
 import { model } from "./model";
 import AnalogClock from "./analog-clock";
@@ -12,7 +13,7 @@ const LAYOUT = {
   SQUARE: "square"
 };
 
-window.onresize = function(event) {
+window.onresize = function() {
   m.redraw();
 };
 

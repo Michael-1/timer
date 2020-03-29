@@ -1,6 +1,7 @@
-const m = require("mithril");
+// eslint-disable-next-line no-unused-vars
+import m from "mithril";
 
-const bell = require("../assets/audio/bell.ogg");
+import bell from "../assets/audio/bell.ogg";
 
 const STATE = {
   READY: "ready",
@@ -17,8 +18,6 @@ const model = {
   manualTotalTime: null,
   timeLeft: null,
   endTime: null,
-
-  timeouts: [],
 
   setTime: function(time) {
     model.originalTime = time;
@@ -62,25 +61,23 @@ const model = {
     model.endTime = Date.now() + model.timeLeft;
     this.countdown();
     document.getElementById("time-input").blur();
-    model.timeouts.push(
-      setTimeout(function() {
-        new Audio(bell).play();
-        model.timeLeft = 0;
-        model.reset();
-        m.redraw();
-        for (let el of document.getElementsByClassName(`animation--end`))
-          el.beginElement();
-      }, model.timeLeft)
-    );
+    model.endTimeout = setTimeout(function() {
+      new Audio(bell).play();
+      model.timeLeft = 0;
+      model.reset();
+      m.redraw();
+      for (let el of document.getElementsByClassName(`animation--end`))
+        el.beginElement();
+    }, model.timeLeft);
     model.animateElements(oldState);
   },
 
   countdown: function() {
     model.timeLeft = model.endTime - Date.now();
-    console.debug(model.timeLeft);
     m.redraw();
-    model.timeouts.push(
-      setTimeout(model.countdown, model.timeLeft % 1000 || 1000)
+    model.countdownTimeout = setTimeout(
+      model.countdown,
+      model.timeLeft % 1000 || 1000
     );
   },
 
@@ -92,7 +89,8 @@ const model = {
   },
 
   clearTimeouts: function() {
-    while ((timeout = this.timeouts.pop())) clearTimeout(timeout);
+    clearTimeout(model.endTimeout);
+    clearTimeout(model.countdownTimeout);
   },
 
   clickOnDisabled: function() {
@@ -110,4 +108,4 @@ const model = {
   }
 };
 
-module.exports = { model, STATE };
+export { model, STATE };

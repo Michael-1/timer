@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import m from "mithril";
 import { model, STATE } from "./model";
 

@@ -1,6 +1,7 @@
-const m = require("mithril");
+// eslint-disable-next-line no-unused-vars
+import m from "mithril";
 
-module.exports = {
+export default {
   oldAttrs: null,
   attrsChanged: false,
 
@@ -37,6 +38,7 @@ module.exports = {
       this.oldAttrs
         ? [
             vnode.children,
+            // eslint-disable-next-line mithril/jsx-key
             <animateMotion
               id={vnode.key}
               begin="indefinite"
@@ -46,6 +48,7 @@ module.exports = {
                 `L ${relOldPoint.x} ${relOldPoint.y}`
               }
             />,
+            // eslint-disable-next-line mithril/jsx-key
             <animateMotion
               begin={vnode.key + ".end"}
               dur="500ms"
