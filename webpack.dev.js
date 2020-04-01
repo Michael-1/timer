@@ -11,8 +11,7 @@ module.exports = merge(baseConfig, {
   plugins: [
     new HtmlWebpackPlugin({
       inject: "body",
-      title: "Timer",
-      meta: { viewport: "width=device-width" }
+      title: "Timer"
     })
   ]
 });

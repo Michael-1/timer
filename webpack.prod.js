@@ -20,7 +20,7 @@ module.exports = merge(baseConfig, {
     new HtmlWebpackInlineSourcePlugin(),
     new FaviconsWebpackPlugin({
       logo: "./assets/favicon.svg",
-      outputPath: "favicon",
+      outputPath: "assets",
       favicons: {
         appName: "Timer",
         developerName: "Michael Schmid",
