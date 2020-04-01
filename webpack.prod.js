@@ -1,10 +1,11 @@
 const path = require("path");
 const merge = require("webpack-merge");
 const baseConfig = require("./webpack.common.js");
-
+const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const HtmlWebpackInlineSourcePlugin = require("html-webpack-inline-source-plugin");
 const FaviconsWebpackPlugin = require("favicons-webpack-plugin");
+
 module.exports = merge(baseConfig, {
   mode: "production",
   output: {
@@ -30,6 +31,7 @@ module.exports = merge(baseConfig, {
           yandex: false
         }
       }
-    })
+    }),
+    new OptimizeCssAssetsPlugin()
   ]
 });
