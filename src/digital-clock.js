@@ -11,11 +11,9 @@ const input = {
   view: function() {
     let time =
       model.state === STATE.READY ? model.originalTime : model.timeLeft;
-    const milliseconds = time % 1000;
-    const seconds = ((time - milliseconds) / 1000) % 60;
-    const minutes = (((time - milliseconds) / 1000 - seconds) / 60) % 60;
-    const hours =
-      (((time - milliseconds) / 1000 - seconds) / 60 - minutes) / 60;
+    const seconds = Math.round((time / 1000) % 60);
+    const minutes = Math.floor((time / (1000 * 60)) % 60);
+    const hours = Math.floor(time / (1000 * 60 * 60));
     let text, ghost;
     if (input.userInput === null) {
       const textHours = hours ? hours : "";
