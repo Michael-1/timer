@@ -61,23 +61,24 @@ const model = {
     model.endTime = Date.now() + model.timeLeft;
     this.countdown();
     document.getElementById("time-input").blur();
-    model.endTimeout = setTimeout(function() {
+    model.timers.push(
+      setTimeout(function () {
       new Audio(bell).play();
       model.timeLeft = 0;
       model.reset();
       m.redraw();
       for (let el of document.getElementsByClassName(`animation--end`))
         el.beginElement();
-    }, model.timeLeft);
+      }, model.timeLeft)
+    );
     model.animateElements(oldState);
   },
 
   countdown: function() {
     model.timeLeft = model.endTime - Date.now();
     m.redraw();
-    model.countdownTimeout = setTimeout(
-      model.countdown,
-      model.timeLeft % 1000 || 1000
+    model.timers.push(
+      setTimeout(model.countdown, model.timeLeft % 1000 || 1000)
     );
   },
 
@@ -88,9 +89,11 @@ const model = {
     if (model.timeLeft > 1000) model.animateElements(oldState);
   },
 
-  clearTimeouts: function() {
-    clearTimeout(model.endTimeout);
-    clearTimeout(model.countdownTimeout);
+  clearTimeouts: function () {
+    let timer;
+    while ((timer = model.timers.pop())) {
+      clearTimeout(timer);
+    }
   },
 
   clickOnDisabled: function() {

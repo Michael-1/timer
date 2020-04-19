@@ -64,7 +64,6 @@ onkeyup = function(e) {
     if (model.state === STATE.RUNNING) {
       document.getElementById("pause").blur();
       model.pause();
-      m.redraw();
       return;
     }
     if (model.state === STATE.PAUSED) {
@@ -76,7 +75,6 @@ onkeyup = function(e) {
   if (e.key === "Escape") {
     document.getElementById("reset").blur();
     model.reset();
-    m.redraw();
     return;
   }
 };
