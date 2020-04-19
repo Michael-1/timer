@@ -18,6 +18,7 @@ const model = {
   manualTotalTime: null,
   timeLeft: null,
   endTime: null,
+  timers: [],
 
   setTime: function(time) {
     model.originalTime = time;
@@ -38,7 +39,8 @@ const model = {
     model.intermediateDigitalOriginalTime = null;
   },
 
-  start: function() {
+  start: function () {
+    if (!model.originalTime) return;
     model.timeLeft = model.originalTime;
     model.run();
   },
