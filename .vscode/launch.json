@@ -11,6 +11,14 @@
       "url": "http://localhost:8080",
       "webRoot": "${workspaceFolder}",
       "runtimeExecutable": "/usr/bin/chromium"
+    },
+    {
+      "type": "firefox",
+      "request": "launch",
+      "name": "Firefox",
+      "reAttach": true,
+      "url": "http://localhost:8080",
+      "webRoot": "${workspaceFolder}"
     }
   ]
 }
