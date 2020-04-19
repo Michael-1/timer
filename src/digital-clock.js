@@ -66,9 +66,12 @@ const input = {
             e.preventDefault();
             if (model.intermediateOriginalTime) {
               model.originalTime = model.intermediateOriginalTime;
-              input.userInput = null;
+            }
+            if (model.intermediateDigitalOriginalTime) {
+              model.originalTime = model.intermediateDigitalOriginalTime;
             }
             model.start();
+            input.userInput = null;
           }}
           {...(model.state !== STATE.READY
             ? { style: `width:${textWidth}ch`, onclick: model.clickOnDisabled }
