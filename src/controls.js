@@ -59,41 +59,31 @@ onkeyup = function(e) {
     if (model.state === STATE.READY) {
       document.getElementById("run").blur();
       model.start();
+      m.redraw();
       return;
     }
     if (model.state === STATE.RUNNING) {
       document.getElementById("pause").blur();
       model.pause();
+      m.redraw();
       return;
     }
     if (model.state === STATE.PAUSED) {
       document.getElementById("run").blur();
       model.resume();
+      m.redraw();
       return;
     }
   }
   if (e.key === "Escape") {
     document.getElementById("reset").blur();
     model.reset();
+    m.redraw();
     return;
   }
 };
 
-onkeydown = function(e) {
-  if (e.key === " ") {
-    if (model.state === STATE.READY) {
-      document.getElementById("run").focus();
-      return;
-    }
-    if (model.state === STATE.RUNNING) {
-      document.getElementById("pause").focus();
-      return;
-    }
-    if (model.state === STATE.PAUSED) {
-      document.getElementById("run").focus();
-      return;
-    }
-  }
+onkeydown = function (e) {
   if (e.key === "Escape") {
     document.getElementById("reset").focus();
     return;

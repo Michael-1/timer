@@ -18,7 +18,8 @@ const model = {
   manualTotalTime: null,
   timeLeft: null,
   endTime: null,
-  timers: [],
+  timerEnd: null,
+  timerCountdown: null,
 
   setTime: function(time) {
     model.originalTime = time;
@@ -63,24 +64,16 @@ const model = {
     model.endTime = Date.now() + model.timeLeft;
     this.countdown();
     document.getElementById("time-input").blur();
-    model.timers.push(
-      setTimeout(function () {
-      new Audio(bell).play();
-      model.timeLeft = 0;
-      model.reset();
-      m.redraw();
-      for (let el of document.getElementsByClassName(`animation--end`))
-        el.beginElement();
-      }, model.timeLeft)
-    );
+    model.timerEnd = setTimeout(model.end, model.timeLeft);
     model.animateElements(oldState);
   },
 
   countdown: function() {
     model.timeLeft = model.endTime - Date.now();
     m.redraw();
-    model.timers.push(
-      setTimeout(model.countdown, model.timeLeft % 1000 || 1000)
+    model.timerCountdown = setTimeout(
+      model.countdown,
+      model.timeLeft % 1000 || 1000
     );
   },
 
@@ -91,11 +84,18 @@ const model = {
     if (model.timeLeft > 1000) model.animateElements(oldState);
   },
 
+  end: function () {
+    new Audio(bell).play();
+    model.timeLeft = 0;
+    model.reset();
+    m.redraw();
+    for (let el of document.getElementsByClassName(`animation--end`))
+      el.beginElement();
+  },
+
   clearTimeouts: function () {
-    let timer;
-    while ((timer = model.timers.pop())) {
-      clearTimeout(timer);
-    }
+    clearTimeout(model.timerEnd);
+    clearTimeout(model.timerCountdown);
   },
 
   clickOnDisabled: function() {
