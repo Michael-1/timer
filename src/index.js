@@ -1,6 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 import m from "mithril";
-import { model } from "./model";
+import { model, STATE } from "./model";
 import AnalogClock from "./analog-clock";
 import DigitalClock from "./digital-clock";
 import Controls from "./controls";
@@ -29,6 +29,13 @@ const layout = {
     let layout = LAYOUT.SQUARE;
     if (doc.clientWidth * 3 > doc.clientHeight * 4) layout = LAYOUT.WIDE;
     if (doc.clientWidth * 4 < doc.clientHeight * 3) layout = LAYOUT.HIGH;
+
+    const title = "Timer";
+    document.title =
+      model.state !== STATE.RUNNING
+        ? title
+        : title + " • " + DigitalClock.formatTime(model.timeLeft).text;
+
     return (
       <div
         class={

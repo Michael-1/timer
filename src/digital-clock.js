@@ -11,21 +11,10 @@ const input = {
   view: function() {
     let time =
       model.state === STATE.READY ? model.originalTime : model.timeLeft;
-    var hoursFull = time / (1000 * 60 * 60);
-    var hours = Math.floor(hoursFull);
-    var minutesFull = (hoursFull - hours) * 60;
-    var minutes = Math.floor(minutesFull);
-    var seconds = Math.round((minutesFull - minutes) * 60) % 60;
     let text, ghost;
     if (input.userInput === null) {
-      const textHours = hours ? hours : "";
-      const textMinutes = time
-        ? hours
-          ? ":" + String(minutes).padStart(2, "0")
-          : minutes
-        : "";
-      const textSeconds = time ? ":" + String(seconds).padStart(2, 0) : "";
-      text = textHours + textMinutes + textSeconds;
+      const { text: txt, hours, minutes } = this.formatTime(time);
+      text = txt;
       const ghostHours = hours ? "" : "0";
       const ghostMinutes = time
         ? hours
@@ -112,7 +101,24 @@ const input = {
     );
   },
 
-  setTime: function() {
+  formatTime: function (time) {
+    const hoursFull = time / (1000 * 60 * 60);
+    const hours = Math.floor(hoursFull);
+    const minutesFull = (hoursFull - hours) * 60;
+    const minutes = Math.floor(minutesFull);
+    const seconds = Math.round((minutesFull - minutes) * 60) % 60;
+    const textHours = hours ? hours : "";
+    const textMinutes = time
+      ? hours
+        ? ":" + String(minutes).padStart(2, "0")
+        : minutes
+      : "";
+    const textSeconds = time ? ":" + String(seconds).padStart(2, 0) : "";
+    const text = textHours + textMinutes + textSeconds;
+    return { text, hours, minutes, seconds };
+  },
+
+  setTime: function () {
     input.userInput = null;
     const milliseconds = parseInput(this.value.replace(/[.,/]/g, ":"));
     if (!milliseconds) return;
