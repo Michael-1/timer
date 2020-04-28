@@ -50,7 +50,7 @@ export default {
 };
 
 function timeStep(time) {
-  if (time < 60 * 1000) return 1000;
+  if (time <= 60 * 1000 && time > 0) return 1000;
   return 60 * 1000;
 }
 
@@ -84,26 +84,37 @@ onkeyup = function(e) {
 };
 
 onkeydown = function (e) {
-  if (e.key === "Escape") {
+  if (e.key === "Escape" || e.key === "+") {
     document.getElementById("reset").focus();
     return;
   }
   if (model.state === STATE.READY) {
     if (e.key === "ArrowUp") {
-      if (model.intermediateOriginalTime)
+      if (model.intermediateOriginalTime) {
+        if (model.intermediateOriginalTime === null)
+          model.intermediateOriginalTime = 15 * 60 * 1000;
+        else
         model.intermediateOriginalTime += timeStep(
           model.intermediateOriginalTime
         );
+      } else {
+        if (model.originalTime === null) model.originalTime = 15 * 60 * 1000;
       else model.originalTime += timeStep(model.originalTime);
+      }
       m.redraw();
       return;
     }
-    if (e.key === "ArrowDown") {
-      if (model.intermediateOriginalTime)
+    if (e.key === "ArrowDown" || e.key === "-") {
+      if (model.intermediateOriginalTime) {
         model.intermediateOriginalTime -= timeStep(
           --model.intermediateOriginalTime
         );
-      else model.originalTime -= timeStep(--model.originalTime);
+        if (model.intermediateOriginalTime < 0)
+          model.intermediateOriginalTime = 0;
+      } else if (model.originalTime) {
+        model.originalTime -= timeStep(--model.originalTime);
+        if (model.originalTime < 0) model.originalTime = 0;
+      }
       m.redraw();
       return;
     }
