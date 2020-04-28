@@ -14,7 +14,7 @@ export default {
           onclick={model.state === STATE.PAUSED ? model.resume : model.start}
           disabled={
             model.state === STATE.RUNNING ||
-            (!model.originalTime && !model.intermediateOriginalTime)
+            (!model.originalTime && !model.intermediateDigitalOriginalTime)
           }
         >
           <svg class="icon" viewBox="0 0 32 32">
