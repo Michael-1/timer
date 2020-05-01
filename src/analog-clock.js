@@ -174,7 +174,12 @@ const clock = {
 
     // Put it all together and draw fills
     return (
-      <div id="analog-clock">
+      <div
+        id="analog-clock"
+        ontouchstart={clock.touching}
+        ontouchmove={clock.touching}
+        ontouchend={clock.endTouch}
+      >
         <svg
           viewBox={`${-clockRadius} ${-clockRadius} ${clockRadius *
             2} ${clockRadius * 2}`}
@@ -410,7 +415,21 @@ const clock = {
 
   expandTotalTime: function() {
     model.manualTotalTime = 2 * clock.totalTime;
+  },
+
+  touching: function (event) {
+    const touch = event.touches[0];
+    const element = document.elementFromPoint(touch.pageX, touch.pageY);
+    const time = element.dataset.time;
+    if (time) {
+      model.setIntermediateDigitalTime(parseInt(time));
   }
+  },
+
+  endTouch: function () {
+    if (model.intermediateDigitalOriginalTime)
+      model.setTime(model.intermediateDigitalOriginalTime);
+  },
 };
 
 const polarToCartesian = function(radius, angle) {
