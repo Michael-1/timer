@@ -1,5 +1,8 @@
 // eslint-disable-next-line no-unused-vars
 import m from "mithril";
+import DigitalClock from "./digital-clock";
+
+import badge from "../assets/favicon.svg";
 
 import bell_legacy from "../assets/bell/legacy.mp3";
 import bell_pascal from "../assets/bell/pascal.mp3";
@@ -49,6 +52,7 @@ const model = {
     if (!model.originalTime) return;
     model.timeLeft = model.originalTime;
     model.run();
+    Notification.requestPermission();
   },
 
   pause: function () {
@@ -91,6 +95,13 @@ const model = {
 
   end: function () {
     new Audio(bells[Math.floor(Math.random() * bells.length)]).play();
+    new Notification("🕛", {
+      body: DigitalClock.formatTime(model.originalTime).text,
+      badge,
+      icon: badge,
+      vibrate: true,
+      requireInteraction: true,
+    });
     model.timeLeft = 0;
     model.reset();
     m.redraw();
