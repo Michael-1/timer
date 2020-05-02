@@ -1,12 +1,17 @@
 // eslint-disable-next-line no-unused-vars
 import m from "mithril";
 
-import bell from "../assets/audio/bell.ogg";
+import bell_legacy from "../assets/bell/legacy.mp3";
+import bell_pascal from "../assets/bell/pascal.mp3";
+import bell_ilaria from "../assets/bell/ilaria.mp3";
+import bell_michael from "../assets/bell/michael.mp3";
+
+const bells = [bell_legacy, bell_pascal, bell_ilaria, bell_michael];
 
 const STATE = {
   READY: "ready",
   RUNNING: "running",
-  PAUSED: "paused"
+  PAUSED: "paused",
 };
 
 const model = {
@@ -21,21 +26,21 @@ const model = {
   timerEnd: null,
   timerCountdown: null,
 
-  setTime: function(time) {
+  setTime: function (time) {
     model.originalTime = time;
     model.manualTotalTime = null;
     model.resetIntermediateTime();
   },
 
-  setIntermediateTime: function(time) {
+  setIntermediateTime: function (time) {
     model.intermediateOriginalTime = time;
   },
 
-  setIntermediateDigitalTime: function(time) {
+  setIntermediateDigitalTime: function (time) {
     model.intermediateDigitalOriginalTime = time;
   },
 
-  resetIntermediateTime: function() {
+  resetIntermediateTime: function () {
     model.intermediateOriginalTime = null;
     model.intermediateDigitalOriginalTime = null;
   },
@@ -46,7 +51,7 @@ const model = {
     model.run();
   },
 
-  pause: function() {
+  pause: function () {
     model.clearTimeouts();
     const oldState = model.state;
     model.state = STATE.PAUSED;
@@ -54,11 +59,11 @@ const model = {
     model.animateElements(oldState);
   },
 
-  resume: function() {
+  resume: function () {
     model.run();
   },
 
-  run: function() {
+  run: function () {
     const oldState = model.state;
     model.state = STATE.RUNNING;
     model.endTime = Date.now() + model.timeLeft;
@@ -68,7 +73,7 @@ const model = {
     model.animateElements(oldState);
   },
 
-  countdown: function() {
+  countdown: function () {
     model.timeLeft = model.endTime - Date.now();
     m.redraw();
     model.timerCountdown = setTimeout(
@@ -77,7 +82,7 @@ const model = {
     );
   },
 
-  reset: function() {
+  reset: function () {
     model.clearTimeouts();
     const oldState = model.state;
     model.state = STATE.READY;
@@ -85,7 +90,7 @@ const model = {
   },
 
   end: function () {
-    new Audio(bell).play();
+    new Audio(bells[Math.floor(Math.random() * bells.length)]).play();
     model.timeLeft = 0;
     model.reset();
     m.redraw();
@@ -98,9 +103,9 @@ const model = {
     clearTimeout(model.timerCountdown);
   },
 
-  clickOnDisabled: function() {
+  clickOnDisabled: function () {
     model.highlightOnDisabledClick = true;
-    setTimeout(function() {
+    setTimeout(function () {
       model.highlightOnDisabledClick = false;
     }, 500);
   },
@@ -110,7 +115,7 @@ const model = {
       `animation--${oldState}-${model.state}`
     ))
       el.beginElement();
-  }
+  },
 };
 
 export { model, STATE };
