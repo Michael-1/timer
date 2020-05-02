@@ -8,9 +8,6 @@ const FaviconsWebpackPlugin = require("favicons-webpack-plugin");
 
 module.exports = merge(baseConfig, {
   mode: "production",
-  output: {
-    path: path.resolve(__dirname, "../timer-dist")
-  },
   plugins: [
     new HtmlWebpackPlugin({
       template: "index.html",
