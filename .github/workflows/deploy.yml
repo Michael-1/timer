@@ -17,5 +17,8 @@ jobs:
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@releases/v3
         with:
+          DEBUG: true
           BRANCH: gh-pages
           FOLDER: dist
+          CLEAN: true
+          CLEAN_EXCLUDE: '["CNAME"]'
