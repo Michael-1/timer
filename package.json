@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "license": "GPL-3.0",
   "repository": "https://github.com/Michael-1/timer",
+  "homepage": "https://timer.pizza",
   "scripts": {
     "start": "webpack-dev-server --config webpack.dev.js",
     "build": "webpack --config webpack.prod.js"
