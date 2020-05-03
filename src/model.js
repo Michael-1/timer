@@ -51,82 +51,79 @@ const model = {
   start: function () {
     if (!model.originalTime) return;
     model.timeLeft = model.originalTime;
-    model.run();
+    run();
     Notification.requestPermission();
   },
 
   pause: function () {
-    model.clearTimeouts();
-    const oldState = model.state;
-    model.state = STATE.PAUSED;
+    clearTimeouts();
+    setState(STATE.PAUSED);
     model.timeLeft = model.endTime - Date.now();
-    model.animateElements(oldState);
   },
 
   resume: function () {
-    model.run();
+    run();
   },
 
-  run: function () {
-    const oldState = model.state;
-    model.state = STATE.RUNNING;
-    model.endTime = Date.now() + model.timeLeft;
-    this.countdown();
-    document.getElementById("time-input").blur();
-    model.timerEnd = setTimeout(model.end, model.timeLeft);
-    model.animateElements(oldState);
+  reset() {
+    clearTimeouts();
+    setState(STATE.READY);
   },
 
-  countdown: function () {
-    model.timeLeft = model.endTime - Date.now();
-    m.redraw();
-    model.timerCountdown = setTimeout(
-      model.countdown,
-      model.timeLeft % 1000 || 1000
-    );
-  },
-
-  reset: function () {
-    model.clearTimeouts();
-    const oldState = model.state;
-    model.state = STATE.READY;
-    if (model.timeLeft > 1000) model.animateElements(oldState);
-  },
-
-  end: function () {
-    new Audio(bells[Math.floor(Math.random() * bells.length)]).play();
-    new Notification("🕛", {
-      body: DigitalClock.formatTime(model.originalTime).text,
-      badge,
-      icon: badge,
-      vibrate: true,
-      requireInteraction: true,
-    });
-    model.timeLeft = 0;
-    model.reset();
-    m.redraw();
-    for (let el of document.getElementsByClassName(`animation--end`))
-      el.beginElement();
-  },
-
-  clearTimeouts: function () {
-    clearTimeout(model.timerEnd);
-    clearTimeout(model.timerCountdown);
-  },
-
-  clickOnDisabled: function () {
+  clickOnDisabled() {
     model.highlightOnDisabledClick = true;
     setTimeout(function () {
       model.highlightOnDisabledClick = false;
     }, 500);
   },
-
-  animateElements(oldState) {
-    for (let el of document.getElementsByClassName(
-      `animation--${oldState}-${model.state}`
-    ))
-      el.beginElement();
-  },
 };
+
+function run() {
+  setState(STATE.RUNNING);
+  model.endTime = Date.now() + model.timeLeft;
+  countdown();
+  document.getElementById("time-input").blur();
+  model.timerEnd = setTimeout(end, model.timeLeft);
+}
+
+function countdown() {
+  model.timeLeft = model.endTime - Date.now();
+  m.redraw();
+  model.timerCountdown = setTimeout(countdown, model.timeLeft % 1000 || 1000);
+}
+
+function end() {
+  new Audio(bells[Math.floor(Math.random() * bells.length)]).play();
+  new Notification("🕛", {
+    body: DigitalClock.formatTime(model.originalTime).text,
+    badge,
+    icon: badge,
+    vibrate: true,
+    requireInteraction: true,
+  });
+  model.timeLeft = 0;
+  model.reset();
+  m.redraw();
+  for (let el of document.getElementsByClassName(`animation--end`))
+    el.beginElement();
+}
+
+function clearTimeouts() {
+  clearTimeout(model.timerEnd);
+  clearTimeout(model.timerCountdown);
+}
+
+function setState(state) {
+  const oldState = model.state;
+  model.state = state;
+  animateElements(oldState);
+}
+
+function animateElements(oldState) {
+  for (let el of document.getElementsByClassName(
+    `animation--${oldState}-${model.state}`
+  ))
+    el.beginElement();
+}
 
 export { model, STATE };
