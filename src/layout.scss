@@ -9,6 +9,9 @@ body {
   position: fixed;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-variant-numeric: lining-nums;
+  @media (prefers-color-scheme: dark) {
+    background-color: black;
+  }
 }
 
 * {

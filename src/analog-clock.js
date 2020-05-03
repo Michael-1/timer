@@ -183,7 +183,7 @@ const clock = {
           viewBox={`${-clockRadius} ${-clockRadius} ${clockRadius *
             2} ${clockRadius * 2}`}
         >
-          {" "}
+          <circle class="background" cx={0} cy={0} r={clockRadius} />
           <g
             class={
               "originalTime" +

@@ -20,6 +20,10 @@
       width: 100%;
     }
 
+    .background {
+      fill: white;
+    }
+
     .tick {
       stroke: black;
       stroke-width: 0.1;
@@ -48,6 +52,9 @@
       .negative {
         fill: none;
         stroke: white;
+        @media (prefers-color-scheme: dark) {
+          fill: initial;
+        }
         transform: rotate(-90deg);
         transition: stroke-dashoffset 500ms 0ms;
       }
