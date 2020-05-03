@@ -1,5 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 import m from "mithril";
+import AnalogClock from "./analog-clock";
 import DigitalClock from "./digital-clock";
 
 import badge from "../assets/favicon.svg";
@@ -15,6 +16,13 @@ const STATE = {
   READY: "ready",
   RUNNING: "running",
   PAUSED: "paused",
+};
+
+const STORED_ITEMS = {
+  STATE: "state",
+  ORIGINAL_TIME: "original_time",
+  END_TIME: "end_time",
+  TIME_LEFT: "time_left",
 };
 
 const model = {
@@ -33,6 +41,7 @@ const model = {
     model.originalTime = time;
     model.manualTotalTime = null;
     model.resetIntermediateTime();
+    localStorage.setItem(STORED_ITEMS.ORIGINAL_TIME, time);
   },
 
   setIntermediateTime: function (time) {
@@ -59,6 +68,7 @@ const model = {
     clearTimeouts();
     setState(STATE.PAUSED);
     model.timeLeft = model.endTime - Date.now();
+    localStorage.setItem(STORED_ITEMS.TIME_LEFT, model.timeLeft);
   },
 
   resume: function () {
@@ -76,11 +86,31 @@ const model = {
       model.highlightOnDisabledClick = false;
     }, 500);
   },
+
+  loadSettingsFromStore() {
+    model.originalTime = parseInt(
+      localStorage.getItem(STORED_ITEMS.ORIGINAL_TIME)
+    );
+    const storedState = localStorage.getItem(STORED_ITEMS.STATE);
+    if (storedState) {
+      setState(storedState);
+      if (storedState === STATE.RUNNING) {
+        model.endTime = parseInt(localStorage.getItem(STORED_ITEMS.END_TIME));
+        if (model.endTime > Date.now()) {
+          model.timeLeft = model.endTime - Date.now();
+        } else {
+          setState(STATE.READY);
+        }
+      } else if (storedState === STATE.PAUSED)
+        model.timeLeft = parseInt(localStorage.getItem(STORED_ITEMS.TIME_LEFT));
+    }
+  },
 };
 
 function run() {
   setState(STATE.RUNNING);
   model.endTime = Date.now() + model.timeLeft;
+  localStorage.setItem(STORED_ITEMS.END_TIME, model.endTime);
   countdown();
   document.getElementById("time-input").blur();
   model.timerEnd = setTimeout(end, model.timeLeft);
@@ -116,14 +146,8 @@ function clearTimeouts() {
 function setState(state) {
   const oldState = model.state;
   model.state = state;
-  animateElements(oldState);
-}
-
-function animateElements(oldState) {
-  for (let el of document.getElementsByClassName(
-    `animation--${oldState}-${model.state}`
-  ))
-    el.beginElement();
+  AnalogClock.animateElements(oldState);
+  localStorage.setItem(STORED_ITEMS.STATE, state);
 }
 
 export { model, STATE };

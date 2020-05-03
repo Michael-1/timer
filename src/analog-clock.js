@@ -429,6 +429,13 @@ const clock = {
     if (model.intermediateDigitalOriginalTime)
       model.setTime(model.intermediateDigitalOriginalTime);
   },
+
+  animateElements(oldState) {
+    for (let el of document.getElementsByClassName(
+      `animation--${oldState}-${model.state}`
+    ))
+      el.beginElement();
+  },
 };
 
 const polarToCartesian = function(radius, angle) {

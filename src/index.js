@@ -24,7 +24,16 @@ const layout = {
     this.initialRendering = false;
   },
 
-  view: function() {
+  oninit: model.loadSettingsFromStore,
+
+  oncreate: function () {
+    if (model.state === STATE.RUNNING) {
+      model.resume();
+      AnalogClock.animateElements(STATE.READY);
+    }
+  },
+
+  view: function () {
     const doc = document.documentElement;
     let layout = LAYOUT.SQUARE;
     if (doc.clientWidth * 3 > doc.clientHeight * 4) layout = LAYOUT.WIDE;
