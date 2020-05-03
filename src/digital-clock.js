@@ -102,11 +102,13 @@ const input = {
   },
 
   formatTime: function (time) {
-    const hoursFull = time / (1000 * 60 * 60);
-    const hours = Math.floor(hoursFull);
-    const minutesFull = (hoursFull - hours) * 60;
-    const minutes = Math.floor(minutesFull);
-    const seconds = Math.round((minutesFull - minutes) * 60) % 60;
+    const secondFractions = time / 1000 - Math.round(time / 1000);
+    let rest = time - secondFractions * 1000;
+    const seconds = (rest / 1000) % 60;
+    rest -= seconds * 1000;
+    const minutes = (rest / (1000 * 60)) % 60;
+    rest -= minutes * (1000 * 60);
+    const hours = rest / (1000 * 60 * 60);
     const textHours = hours ? hours : "";
     const textMinutes = time
       ? hours
