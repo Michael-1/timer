@@ -10,7 +10,6 @@ const clockRadius = 50;
 const majorTickSize = clockRadius / 5;
 const minorTickSize = majorTickSize - 1;
 const innerClockRadius = clockRadius - minorTickSize;
-const outerClockRadius = clockRadius + 1;
 const labelFontSize = 7;
 
 const SECOND = 1000;
@@ -204,14 +203,14 @@ const clock = {
               class="negative"
               cx={0}
               cy={0}
-              r={outerClockRadius / 2}
-              stroke-width={outerClockRadius}
-              stroke-dasharray={outerClockRadius * Math.PI}
+              r={clockRadius / 2}
+              stroke-width={clockRadius}
+              stroke-dasharray={clockRadius * Math.PI}
               stroke-dashoffset={
                 (originalTime < clock.totalTime
                   ? originalTime / clock.totalTime
                   : 1 - Number.EPSILON) * // –ε fights layout bug in Chrome
-                outerClockRadius *
+                clockRadius *
                 Math.PI
               }
             />
@@ -220,7 +219,7 @@ const clock = {
             <FadingPath
               class="overshoot-indicator"
               d={
-                `M 0 ${-outerClockRadius}` +
+                `M 0 ${-clockRadius}` +
                 `v ${minorTickSize + 2}` +
                 `A ${innerClockRadius - 1} ${innerClockRadius - 1} 0 0 1 ` +
                 polarToCartesian(
@@ -233,14 +232,14 @@ const clock = {
                   -(minorTickSize * 0.5) / (clockRadius * 2 * Math.PI)
                 )}` +
                 `L ${polarToCartesian(
-                  outerClockRadius,
+                  clockRadius,
                   -minorTickSize / (clockRadius * 2 * Math.PI)
                 )}` +
-                `A ${outerClockRadius} ${outerClockRadius} 0 0 0 0 ${-outerClockRadius}` +
+                `A ${clockRadius} ${clockRadius} 0 0 0 0 ${-clockRadius}` +
                 "Z" +
                 `M ` +
                 polarToCartesian(
-                  outerClockRadius,
+                  clockRadius,
                   (-minorTickSize * 1.5) / (clockRadius * 2 * Math.PI)
                 ) +
                 // Second arrow
@@ -263,12 +262,12 @@ const clock = {
                   (-minorTickSize * 1.5) / (clockRadius * 2 * Math.PI)
                 )}` +
                 `L ${polarToCartesian(
-                  outerClockRadius,
+                  clockRadius,
                   (-minorTickSize * 2.0) / (clockRadius * 2 * Math.PI)
                 )}` +
-                `A ${outerClockRadius} ${outerClockRadius} 0 0 0 ` +
+                `A ${clockRadius} ${clockRadius} 0 0 0 ` +
                 polarToCartesian(
-                  outerClockRadius,
+                  clockRadius,
                   (-minorTickSize * 1.0) / (clockRadius * 2 * Math.PI)
                 ) +
                 "Z"
