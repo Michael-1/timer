@@ -16,12 +16,42 @@ const SECOND = 1000;
 const MINUTE = 60 * SECOND;
 const HOUR = 60 * MINUTE;
 
+const timeSteps = [
+  {
+    totalTime: MINUTE,
+    tickFrequency: SECOND,
+    majorTickFrequency: 15 * SECOND,
+    labelUnit: SECOND,
+  },
+  {
+    totalTime: 10 * MINUTE,
+    tickFrequency: 10 * SECOND,
+    majorTickFrequency: 1 * MINUTE,
+    labelUnit: MINUTE,
+  },
+  {
+  totalTime: HOUR,
+  tickFrequency: MINUTE,
+    majorTickFrequency: 10 * MINUTE,
+  labelUnit: MINUTE,
+  },
+  {
+    totalTime: 2 * HOUR,
+    tickFrequency: MINUTE,
+    majorTickFrequency: 10 * MINUTE,
+    labelUnit: MINUTE,
+  },
+  {
+    totalTime: Infinity,
+    tickFrequency: 15 * MINUTE,
+    majorTickFrequency: HOUR,
+    labelUnit: HOUR,
+  },
+];
+
 const clock = {
   totalTime: HOUR,
   previousTotalTime: HOUR,
-  tickFrequency: MINUTE,
-  majorTickFrequency: 5 * MINUTE,
-  labelUnit: MINUTE,
 
   interactionsOn: true,
 
@@ -32,35 +62,18 @@ const clock = {
 
   view: function() {
     // Clock scaling
-    const relevantTotalTime = Math.max(
-      model.manualTotalTime,
-      model.originalTime
+    const relevantTimeFrame =
+      model.manualTotalTime || model.originalTime || clock.totalTime;
+    if (relevantTimeFrame) {
+      Object.assign(
+        clock,
+        timeSteps.find(function (step) {
+          return step.totalTime >= relevantTimeFrame;
+        })
     );
-    if (relevantTotalTime) {
-      clock.totalTime = Math.ceil(relevantTotalTime / HOUR) * HOUR;
-      clock.tickFrequency = 15 * MINUTE;
-      clock.majorTickFrequency = HOUR;
-      clock.labelUnit = HOUR;
-      if (relevantTotalTime <= 2 * HOUR) {
-        clock.tickFrequency = MINUTE;
-        clock.majorTickFrequency = 10 * MINUTE;
-        clock.labelUnit = MINUTE;
+      if (clock.totalTime === Infinity)
+        clock.totalTime = Math.ceil(relevantTimeFrame / HOUR) * HOUR;
       }
-      if (relevantTotalTime <= HOUR) {
-        clock.majorTickFrequency = 5 * MINUTE;
-      }
-      if (relevantTotalTime <= 10 * MINUTE) {
-        clock.totalTime = 10 * MINUTE;
-        clock.tickFrequency = 10 * SECOND;
-        clock.majorTickFrequency = 1 * MINUTE;
-      }
-      if (relevantTotalTime <= MINUTE) {
-        clock.totalTime = MINUTE;
-        clock.tickFrequency = SECOND;
-        clock.majorTickFrequency = 15 * SECOND;
-        clock.labelUnit = SECOND;
-      }
-    }
 
     let isZooming = false;
     if (clock.totalTime !== clock.previousTotalTime) {
@@ -167,8 +180,10 @@ const clock = {
       dur: "2000ms",
       begin: "indefinite",
       calcMode: "spline",
-      keyTimes: `0;${0.4 + model.originalTime / (clock.totalTime * 2)};1`,
-      keySplines: ".5 0 1 1; 0 0 .5 1"
+      keyTimes:
+        model.originalTime <= clock.totalTime &&
+        `0;${0.4 + model.originalTime / (clock.totalTime * 2)};1`,
+      keySplines: ".5 0 1 1; 0 0 .5 1",
     };
 
     // Put it all together and draw fills
@@ -380,19 +395,34 @@ const clock = {
           )}
         </svg>
         {model.state === STATE.READY && (
+          <div class="range-control">
           <button
             id="expand"
             title="Expand visible time range"
             disabled={clock.totalTime >= 12 * HOUR}
             onclick={clock.expandTotalTime}
-            onkeydown={function(e) {
+              onkeydown={function (e) {
+                if (e.key === " ") e.preventDefault();
+              }}
+            >
+              <svg viewBox="0 0 32 32" class="icon">
+                <path d="M18 9v14l12-7zm-4 0L2 16l12 7z" />
+              </svg>
+            </button>
+            <button
+              id="narrow"
+              title="Narrow visible time range"
+              disabled={clock.totalTime <= 1 * MINUTE}
+              onclick={clock.narrowTotalTime}
+              onkeydown={function (e) {
               if (e.key === " ") e.preventDefault();
             }}
           >
             <svg viewBox="0 0 32 32" class="icon">
-              <path d="M4.36 10.04L0 17.6l7.56 4.36-1.22-4.54a42.69 42.69 0 0119.31.02l-.26.98-.95 3.54L32 17.6l-4.37-7.56-1.2 4.52a45.62 45.62 0 00-20.85.02z" />
+                <path d="M3 9v14l12-7zm26 0l-12 7 12 7z" />
             </svg>
           </button>
+          </div>
         )}
       </div>
     );
@@ -414,6 +444,16 @@ const clock = {
 
   expandTotalTime: function() {
     model.manualTotalTime = 2 * clock.totalTime;
+  },
+
+  narrowTotalTime: function () {
+    const currentStep = timeSteps.findIndex(function (step) {
+      return step.totalTime >= clock.totalTime;
+    });
+    if (!currentStep) return;
+    if (currentStep + 1 === timeSteps.length)
+      model.manualTotalTime = clock.totalTime / 2;
+    else model.manualTotalTime = timeSteps[currentStep - 1].totalTime;
   },
 
   touching: function (event) {
