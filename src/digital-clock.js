@@ -8,7 +8,7 @@ import "./digital-clock.scss";
 const input = {
   userInput: null,
 
-  view: function() {
+  view: function () {
     let time =
       model.state === STATE.READY ? model.originalTime : model.timeLeft;
     let text, ghost;
@@ -51,7 +51,7 @@ const input = {
     return (
       <div id="digital-clock">
         <form
-          onsubmit={function(e) {
+          onsubmit={function (e) {
             e.preventDefault();
             if (model.intermediateOriginalTime) {
               model.originalTime = model.intermediateOriginalTime;
@@ -72,10 +72,10 @@ const input = {
             value={text}
             oninput={input.setIntermediateTime}
             onblur={input.setTime}
-            onkeyup={function(e) {
+            onkeyup={function (e) {
               e.stopPropagation();
             }}
-            onkeydown={function(e) {
+            onkeydown={function (e) {
               e.stopPropagation();
             }}
             inputmode="decimal"
@@ -109,13 +109,13 @@ const input = {
     const minutes = (rest / (1000 * 60)) % 60;
     rest -= minutes * (1000 * 60);
     const hours = rest / (1000 * 60 * 60);
-    const textHours = hours ? hours : "";
+    const textHours = hours ? hours.toFixed(0) : "";
     const textMinutes = time
       ? hours
-        ? ":" + String(minutes).padStart(2, "0")
+        ? ":" + minutes.toFixed(0).padStart(2, "0")
         : minutes
       : "";
-    const textSeconds = time ? ":" + String(seconds).padStart(2, 0) : "";
+    const textSeconds = time ? ":" + seconds.toFixed(0).padStart(2, 0) : "";
     const text = textHours + textMinutes + textSeconds;
     return { text, hours, minutes, seconds };
   },
@@ -127,12 +127,12 @@ const input = {
     model.setTime(milliseconds);
   },
 
-  setIntermediateTime: function() {
+  setIntermediateTime: function () {
     input.userInput = this.value.replace(/[.,/]/g, ":");
     const milliseconds = parseInput(input.userInput);
     if (!milliseconds) return;
     model.setIntermediateDigitalTime(milliseconds);
-  }
+  },
 };
 
 function parseInput(input) {
