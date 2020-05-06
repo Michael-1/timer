@@ -60,6 +60,7 @@ const model = {
   start: function () {
     if (!model.originalTime) return;
     model.timeLeft = model.originalTime;
+    model.manualTotalTime = null;
     run();
     Notification.requestPermission();
   },
