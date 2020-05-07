@@ -125,18 +125,20 @@ function countdown() {
 
 function end() {
   new Audio(bells[Math.floor(Math.random() * bells.length)]).play();
-  new Notification("🕛", {
-    body: DigitalClock.formatTime(model.originalTime).text,
-    badge,
-    icon: badge,
-    vibrate: true,
-    requireInteraction: true,
-  });
   model.timeLeft = 0;
   model.reset();
   m.redraw();
   for (let el of document.getElementsByClassName(`animation--end`))
     el.beginElement();
+  if (Notification.permission === "granted") {
+    new Notification("🕛", {
+      body: DigitalClock.formatTime(model.originalTime).text,
+      badge,
+      icon: badge,
+      vibrate: true,
+      requireInteraction: true,
+    });
+  }
 }
 
 function clearTimeouts() {
