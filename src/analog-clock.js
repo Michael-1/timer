@@ -32,7 +32,7 @@ const timeSteps = [
   {
   totalTime: HOUR,
   tickFrequency: MINUTE,
-    majorTickFrequency: 10 * MINUTE,
+    majorTickFrequency: 5 * MINUTE,
   labelUnit: MINUTE,
   },
   {
