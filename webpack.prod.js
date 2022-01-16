@@ -1,9 +1,8 @@
-const path = require("path");
+/* eslint-disable no-undef */
 const merge = require("webpack-merge");
 const baseConfig = require("./webpack.common.js");
-const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const HtmlWebpackInlineSourcePlugin = require("html-webpack-inline-source-plugin");
 const FaviconsWebpackPlugin = require("favicons-webpack-plugin");
 
 module.exports = merge(baseConfig, {
@@ -14,7 +13,6 @@ module.exports = merge(baseConfig, {
       inject: "body",
       inlineSource: ".(js|css)$"
     }),
-    new HtmlWebpackInlineSourcePlugin(),
     new FaviconsWebpackPlugin({
       logo: "./assets/favicon.svg",
       outputPath: "assets",
@@ -29,6 +27,10 @@ module.exports = merge(baseConfig, {
         }
       }
     }),
-    new OptimizeCssAssetsPlugin()
-  ]
+  ], 
+  optimization: {
+    minimizer: [
+      new CssMinimizerPlugin(),
+    ],
+  },
 });
