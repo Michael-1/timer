@@ -5,7 +5,6 @@
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 var m = __webpack_require__(865);
-
 module.exports = {
   onbeforeremove: function onbeforeremove(vnode) {
     vnode.dom.classList.add("fade");
@@ -37,17 +36,15 @@ var Vnode = __webpack_require__(178)
 
 module.exports = function(render, schedule, console) {
 	var subscriptions = []
-	var rendering = false
 	var pending = false
+	var offset = -1
 
 	function sync() {
-		if (rendering) throw new Error("Nested m.redraw.sync() call")
-		rendering = true
-		for (var i = 0; i < subscriptions.length; i += 2) {
-			try { render(subscriptions[i], Vnode(subscriptions[i + 1]), redraw) }
+		for (offset = 0; offset < subscriptions.length; offset += 2) {
+			try { render(subscriptions[offset], Vnode(subscriptions[offset + 1]), redraw) }
 			catch (e) { console.error(e) }
 		}
-		rendering = false
+		offset = -1
 	}
 
 	function redraw() {
@@ -64,13 +61,14 @@ module.exports = function(render, schedule, console) {
 
 	function mount(root, component) {
 		if (component != null && component.view == null && typeof component !== "function") {
-			throw new TypeError("m.mount(element, component) expects a component, not a vnode")
+			throw new TypeError("m.mount expects a component, not a vnode.")
 		}
 
 		var index = subscriptions.indexOf(root)
 		if (index >= 0) {
 			subscriptions.splice(index, 2)
-			render(root, [], redraw)
+			if (index <= offset) offset -= 2
+			render(root, [])
 		}
 
 		if (component != null) {
@@ -98,16 +96,147 @@ var Promise = __webpack_require__(164)
 var buildPathname = __webpack_require__(249)
 var parsePathname = __webpack_require__(561)
 var compileTemplate = __webpack_require__(562)
-var assign = __webpack_require__(127)
+var assign = __webpack_require__(641)
+var censor = __webpack_require__(542)
 
 var sentinel = {}
 
+function decodeURIComponentSave(component) {
+	try {
+		return decodeURIComponent(component)
+	} catch(e) {
+		return component
+	}
+}
+
 module.exports = function($window, mountRedraw) {
-	var fireAsync
+	var callAsync = $window == null
+		// In case Mithril.js' loaded globally without the DOM, let's not break
+		? null
+		: typeof $window.setImmediate === "function" ? $window.setImmediate : $window.setTimeout
+	var p = Promise.resolve()
+
+	var scheduled = false
+
+	// state === 0: init
+	// state === 1: scheduled
+	// state === 2: done
+	var ready = false
+	var state = 0
+
+	var compiled, fallbackRoute
+
+	var currentResolver = sentinel, component, attrs, currentPath, lastUpdate
+
+	var RouterRoot = {
+		onbeforeupdate: function() {
+			state = state ? 2 : 1
+			return !(!state || sentinel === currentResolver)
+		},
+		onremove: function() {
+			$window.removeEventListener("popstate", fireAsync, false)
+			$window.removeEventListener("hashchange", resolveRoute, false)
+		},
+		view: function() {
+			if (!state || sentinel === currentResolver) return
+			// Wrap in a fragment to preserve existing key semantics
+			var vnode = [Vnode(component, attrs.key, attrs)]
+			if (currentResolver) vnode = currentResolver.render(vnode[0])
+			return vnode
+		},
+	}
+
+	var SKIP = route.SKIP = {}
+
+	function resolveRoute() {
+		scheduled = false
+		// Consider the pathname holistically. The prefix might even be invalid,
+		// but that's not our problem.
+		var prefix = $window.location.hash
+		if (route.prefix[0] !== "#") {
+			prefix = $window.location.search + prefix
+			if (route.prefix[0] !== "?") {
+				prefix = $window.location.pathname + prefix
+				if (prefix[0] !== "/") prefix = "/" + prefix
+			}
+		}
+		// This seemingly useless `.concat()` speeds up the tests quite a bit,
+		// since the representation is consistently a relatively poorly
+		// optimized cons string.
+		var path = prefix.concat()
+			.replace(/(?:%[a-f89][a-f0-9])+/gim, decodeURIComponentSave)
+			.slice(route.prefix.length)
+		var data = parsePathname(path)
+
+		assign(data.params, $window.history.state)
+
+		function reject(e) {
+			console.error(e)
+			setPath(fallbackRoute, null, {replace: true})
+		}
+
+		loop(0)
+		function loop(i) {
+			// state === 0: init
+			// state === 1: scheduled
+			// state === 2: done
+			for (; i < compiled.length; i++) {
+				if (compiled[i].check(data)) {
+					var payload = compiled[i].component
+					var matchedRoute = compiled[i].route
+					var localComp = payload
+					var update = lastUpdate = function(comp) {
+						if (update !== lastUpdate) return
+						if (comp === SKIP) return loop(i + 1)
+						component = comp != null && (typeof comp.view === "function" || typeof comp === "function")? comp : "div"
+						attrs = data.params, currentPath = path, lastUpdate = null
+						currentResolver = payload.render ? payload : null
+						if (state === 2) mountRedraw.redraw()
+						else {
+							state = 2
+							mountRedraw.redraw.sync()
+						}
+					}
+					// There's no understating how much I *wish* I could
+					// use `async`/`await` here...
+					if (payload.view || typeof payload === "function") {
+						payload = {}
+						update(localComp)
+					}
+					else if (payload.onmatch) {
+						p.then(function () {
+							return payload.onmatch(data.params, path, matchedRoute)
+						}).then(update, path === fallbackRoute ? null : reject)
+					}
+					else update("div")
+					return
+				}
+			}
+
+			if (path === fallbackRoute) {
+				throw new Error("Could not resolve default route " + fallbackRoute + ".")
+			}
+			setPath(fallbackRoute, null, {replace: true})
+		}
+	}
+
+	// Set it unconditionally so `m.route.set` and `m.route.Link` both work,
+	// even if neither `pushState` nor `hashchange` are supported. It's
+	// cleared if `hashchange` is used, since that makes it automatically
+	// async.
+	function fireAsync() {
+		if (!scheduled) {
+			scheduled = true
+			// TODO: just do `mountRedraw.redraw()` here and elide the timer
+			// dependency. Note that this will muck with tests a *lot*, so it's
+			// not as easy of a change as it sounds.
+			callAsync(resolveRoute)
+		}
+	}
 
 	function setPath(path, data, options) {
 		path = buildPathname(path, data)
-		if (fireAsync != null) {
+		if (ready) {
 			fireAsync()
 			var state = options ? options.state : null
 			var title = options ? options.title : null
@@ -119,21 +248,13 @@ module.exports = function($window, mountRedraw) {
 		}
 	}
 
-	var currentResolver = sentinel, component, attrs, currentPath, lastUpdate
-
-	var SKIP = route.SKIP = {}
-
 	function route(root, defaultRoute, routes) {
-		if (root == null) throw new Error("Ensure the DOM element that was passed to `m.route` is not undefined")
-		// 0 = start
-		// 1 = init
-		// 2 = ready
-		var state = 0
+		if (!root) throw new TypeError("DOM element being rendered to does not exist.")
 
-		var compiled = Object.keys(routes).map(function(route) {
-			if (route[0] !== "/") throw new SyntaxError("Routes must start with a `/`")
+		compiled = Object.keys(routes).map(function(route) {
+			if (route[0] !== "/") throw new SyntaxError("Routes must start with a '/'.")
 			if ((/:([^\/\.-]+)(\.{3})?:/).test(route)) {
-				throw new SyntaxError("Route parameter names must be separated with either `/`, `.`, or `-`")
+				throw new SyntaxError("Route parameter names must be separated with either '/', '.', or '-'.")
 			}
 			return {
 				route: route,
@@ -141,128 +262,24 @@ module.exports = function($window, mountRedraw) {
 				check: compileTemplate(route),
 			}
 		})
-		var callAsync = typeof setImmediate === "function" ? setImmediate : setTimeout
-		var p = Promise.resolve()
-		var scheduled = false
-		var onremove
-
-		fireAsync = null
-
+		fallbackRoute = defaultRoute
 		if (defaultRoute != null) {
 			var defaultData = parsePathname(defaultRoute)
 
 			if (!compiled.some(function (i) { return i.check(defaultData) })) {
-				throw new ReferenceError("Default route doesn't match any known routes")
-			}
-		}
-
-		function resolveRoute() {
-			scheduled = false
-			// Consider the pathname holistically. The prefix might even be invalid,
-			// but that's not our problem.
-			var prefix = $window.location.hash
-			if (route.prefix[0] !== "#") {
-				prefix = $window.location.search + prefix
-				if (route.prefix[0] !== "?") {
-					prefix = $window.location.pathname + prefix
-					if (prefix[0] !== "/") prefix = "/" + prefix
-				}
-			}
-			// This seemingly useless `.concat()` speeds up the tests quite a bit,
-			// since the representation is consistently a relatively poorly
-			// optimized cons string.
-			var path = prefix.concat()
-				.replace(/(?:%[a-f89][a-f0-9])+/gim, decodeURIComponent)
-				.slice(route.prefix.length)
-			var data = parsePathname(path)
-
-			assign(data.params, $window.history.state)
-
-			function fail() {
-				if (path === defaultRoute) throw new Error("Could not resolve default route " + defaultRoute)
-				setPath(defaultRoute, null, {replace: true})
-			}
-
-			loop(0)
-			function loop(i) {
-				// 0 = init
-				// 1 = scheduled
-				// 2 = done
-				for (; i < compiled.length; i++) {
-					if (compiled[i].check(data)) {
-						var payload = compiled[i].component
-						var matchedRoute = compiled[i].route
-						var localComp = payload
-						var update = lastUpdate = function(comp) {
-							if (update !== lastUpdate) return
-							if (comp === SKIP) return loop(i + 1)
-							component = comp != null && (typeof comp.view === "function" || typeof comp === "function")? comp : "div"
-							attrs = data.params, currentPath = path, lastUpdate = null
-							currentResolver = payload.render ? payload : null
-							if (state === 2) mountRedraw.redraw()
-							else {
-								state = 2
-								mountRedraw.redraw.sync()
-							}
-						}
-						// There's no understating how much I *wish* I could
-						// use `async`/`await` here...
-						if (payload.view || typeof payload === "function") {
-							payload = {}
-							update(localComp)
-						}
-						else if (payload.onmatch) {
-							p.then(function () {
-								return payload.onmatch(data.params, path, matchedRoute)
-							}).then(update, fail)
-						}
-						else update("div")
-						return
-					}
-				}
-				fail()
-			}
-		}
-
-		// Set it unconditionally so `m.route.set` and `m.route.Link` both work,
-		// even if neither `pushState` nor `hashchange` are supported. It's
-		// cleared if `hashchange` is used, since that makes it automatically
-		// async.
-		fireAsync = function() {
-			if (!scheduled) {
-				scheduled = true
-				callAsync(resolveRoute)
+				throw new ReferenceError("Default route doesn't match any known routes.")
 			}
 		}
 
 		if (typeof $window.history.pushState === "function") {
-			onremove = function() {
-				$window.removeEventListener("popstate", fireAsync, false)
-			}
 			$window.addEventListener("popstate", fireAsync, false)
 		} else if (route.prefix[0] === "#") {
-			fireAsync = null
-			onremove = function() {
-				$window.removeEventListener("hashchange", resolveRoute, false)
-			}
 			$window.addEventListener("hashchange", resolveRoute, false)
 		}
 
-		return mountRedraw.mount(root, {
-			onbeforeupdate: function() {
-				state = state ? 2 : 1
-				return !(!state || sentinel === currentResolver)
-			},
-			oncreate: resolveRoute,
-			onremove: onremove,
-			view: function() {
-				if (!state || sentinel === currentResolver) return
-				// Wrap in a fragment to preserve existing key semantics
-				var vnode = [Vnode(component, attrs.key, attrs)]
-				if (currentResolver) vnode = currentResolver.render(vnode[0])
-				return vnode
-			},
-		})
+		ready = true
+		mountRedraw.mount(root, RouterRoot)
+		resolveRoute()
 	}
 	route.set = function(path, data, options) {
 		if (lastUpdate != null) {
@@ -276,20 +293,17 @@ module.exports = function($window, mountRedraw) {
 	route.prefix = "#!"
 	route.Link = {
 		view: function(vnode) {
-			var options = vnode.attrs.options
-			// Remove these so they don't get overwritten
-			var attrs = {}, onclick, href
-			assign(attrs, vnode.attrs)
-			// The first two are internal, but the rest are magic attributes
-			// that need censored to not screw up rendering.
-			attrs.selector = attrs.options = attrs.key = attrs.oninit =
-			attrs.oncreate = attrs.onbeforeupdate = attrs.onupdate =
-			attrs.onbeforeremove = attrs.onremove = null
-
-			// Do this now so we can get the most current `href` and `disabled`.
-			// Those attributes may also be specified in the selector, and we
-			// should honor that.
-			var child = m(vnode.attrs.selector || "a", attrs, vnode.children)
+			// Omit the used parameters from the rendered element - they are
+			// internal. Also, censor the various lifecycle methods.
+			//
+			// We don't strip the other parameters because for convenience we
+			// let them be specified in the selector as well.
+			var child = m(
+				vnode.attrs.selector || "a",
+				censor(vnode.attrs, ["options", "params", "selector", "onclick"]),
+				vnode.children
+			)
+			var options, onclick, href
 
 			// Let's provide a *right* way to disable a route link, rather than
 			// letting people screw up accessibility on accident.
@@ -300,12 +314,13 @@ module.exports = function($window, mountRedraw) {
 			if (child.attrs.disabled = Boolean(child.attrs.disabled)) {
 				child.attrs.href = null
 				child.attrs["aria-disabled"] = "true"
-				// If you *really* do want to do this on a disabled link, use
+				// If you *really* do want add `onclick` on a disabled link, use
 				// an `oncreate` hook to add it.
-				child.attrs.onclick = null
 			} else {
-				onclick = child.attrs.onclick
-				href = child.attrs.href
+				options = vnode.attrs.options
+				onclick = vnode.attrs.onclick
+				// Easier to build it now to keep it isomorphic.
+				href = buildPathname(child.attrs.href, vnode.attrs.params)
 				child.attrs.href = route.prefix + href
 				child.attrs.onclick = function(e) {
 					var result
@@ -385,6 +400,7 @@ var m = function m() { return hyperscript.apply(this, arguments) }
 m.m = hyperscript
 m.trust = hyperscript.trust
 m.fragment = hyperscript.fragment
+m.Fragment = "["
 m.mount = mountRedraw.mount
 m.route = __webpack_require__(843)
 m.render = __webpack_require__(358)
@@ -397,6 +413,7 @@ m.parsePathname = __webpack_require__(561)
 m.buildPathname = __webpack_require__(249)
 m.vnode = __webpack_require__(178)
 m.PromisePolyfill = __webpack_require__(803)
+m.censor = __webpack_require__(542)
 
 module.exports = m
 
@@ -411,20 +428,7 @@ module.exports = m
 
 var render = __webpack_require__(358)
 
-module.exports = __webpack_require__(18)(render, requestAnimationFrame, console)
-
-
-/***/ }),
-
-/***/ 127:
-/***/ (function(module) {
-
-"use strict";
-
-
-module.exports = Object.assign || function(target, source) {
-	if(source) Object.keys(source).forEach(function(key) { target[key] = source[key] })
-}
+module.exports = __webpack_require__(18)(render, typeof requestAnimationFrame !== "undefined" ? requestAnimationFrame : null, typeof console !== "undefined" ? console : null)
 
 
 /***/ }),
@@ -436,12 +440,12 @@ module.exports = Object.assign || function(target, source) {
 
 
 var buildQueryString = __webpack_require__(478)
-var assign = __webpack_require__(127)
+var assign = __webpack_require__(641)
 
 // Returns `path` from `template` + `params`
 module.exports = function(template, params) {
 	if ((/:([^\/\.-]+)(\.{3})?:/).test(template)) {
-		throw new SyntaxError("Template parameter names *must* be separated")
+		throw new SyntaxError("Template parameter names must be separated by either a '/', '-', or '.'.")
 	}
 	if (params == null) return template
 	var queryIndex = template.indexOf("?")
@@ -570,8 +574,8 @@ module.exports = function(url) {
 
 /** @constructor */
 var PromisePolyfill = function(executor) {
-	if (!(this instanceof PromisePolyfill)) throw new Error("Promise must be called with `new`")
-	if (typeof executor !== "function") throw new TypeError("executor must be a function")
+	if (!(this instanceof PromisePolyfill)) throw new Error("Promise must be called with 'new'.")
+	if (typeof executor !== "function") throw new TypeError("executor must be a function.")
 
 	var self = this, resolvers = [], rejectors = [], resolveCurrent = handler(resolvers, true), rejectCurrent = handler(rejectors, false)
 	var instance = self._instance = {resolvers: resolvers, rejectors: rejectors}
@@ -581,7 +585,7 @@ var PromisePolyfill = function(executor) {
 			var then
 			try {
 				if (shouldAbsorb && value != null && (typeof value === "object" || typeof value === "function") && typeof (then = value.then) === "function") {
-					if (value === self) throw new TypeError("Promise can't be resolved w/ itself")
+					if (value === self) throw new TypeError("Promise can't be resolved with itself.")
 					executeOnce(then.bind(value))
 				}
 				else {
@@ -687,6 +691,7 @@ module.exports = PromisePolyfill
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 "use strict";
+/* global window */
 
 
 var PromisePolyfill = __webpack_require__(803)
@@ -752,6 +757,14 @@ module.exports = function(object) {
 "use strict";
 
 
+function decodeURIComponentSave(str) {
+	try {
+		return decodeURIComponent(str)
+	} catch(err) {
+		return str
+	}
+}
+
 module.exports = function(string) {
 	if (string === "" || string == null) return {}
 	if (string.charAt(0) === "?") string = string.slice(1)
@@ -759,8 +772,8 @@ module.exports = function(string) {
 	var entries = string.split("&"), counters = {}, data = {}
 	for (var i = 0; i < entries.length; i++) {
 		var entry = entries[i].split("=")
-		var key = decodeURIComponent(entry[0])
-		var value = entry.length === 2 ? decodeURIComponent(entry[1]) : ""
+		var key = decodeURIComponentSave(entry[0])
+		var value = entry.length === 2 ? decodeURIComponentSave(entry[1]) : ""
 
 		if (value === "true") value = true
 		else if (value === "false") value = false
@@ -803,7 +816,7 @@ module.exports = function(string) {
 "use strict";
 
 
-module.exports = __webpack_require__(452)(window)
+module.exports = __webpack_require__(452)(typeof window !== "undefined" ? window : null)
 
 
 /***/ }),
@@ -836,10 +849,10 @@ module.exports = function() {
 
 var Vnode = __webpack_require__(178)
 var hyperscriptVnode = __webpack_require__(359)
+var hasOwn = __webpack_require__(188)
 
 var selectorParser = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g
 var selectorCache = {}
-var hasOwn = {}.hasOwnProperty
 
 function isEmpty(object) {
 	for (var key in object) if (hasOwn.call(object, key)) return false
@@ -866,13 +879,11 @@ function compileSelector(selector) {
 
 function execSelector(state, vnode) {
 	var attrs = vnode.attrs
-	var children = Vnode.normalizeChildren(vnode.children)
 	var hasClass = hasOwn.call(attrs, "class")
 	var className = hasClass ? attrs.class : attrs.className
 
 	vnode.tag = state.tag
-	vnode.attrs = null
-	vnode.children = undefined
+	vnode.attrs = {}
 
 	if (!isEmpty(state.attrs) && !isEmpty(attrs)) {
 		var newAttrs = {}
@@ -905,12 +916,6 @@ function execSelector(state, vnode) {
 			vnode.attrs = attrs
 			break
 		}
-	}
-
-	if (Array.isArray(children) && children.length === 1 && children[0] != null && children[0].tag === "#") {
-		vnode.text = children[0].children
-	} else {
-		vnode.children = children
 	}
 
 	return vnode
@@ -954,7 +959,7 @@ var Vnode = __webpack_require__(178)
 // In native ES6, I'd instead add a final `...args` parameter to the
 // `hyperscript` and `fragment` factories and define this as
 // `hyperscriptVnode(...args)`, since modern engines do optimize that away. But
-// ES5 (what Mithril requires thanks to IE support) doesn't give me that luxury,
+// ES5 (what Mithril.js requires thanks to IE support) doesn't give me that luxury,
 // and engines aren't nearly intelligent enough to do either of these:
 //
 // 1. Elide the allocation for `[].slice.call(arguments, 1)` when it's passed to
@@ -1021,7 +1026,7 @@ module.exports = function($window) {
 
 	//sanity check to discourage people from doing `vnode.state = ...`
 	function checkState(vnode, original) {
-		if (vnode.state !== original) throw new Error("`vnode.state` must not be modified")
+		if (vnode.state !== original) throw new Error("'vnode.state' must not be modified.")
 	}
 
 	//Note: the hook is passed as the `this` argument to allow proxying the
@@ -1129,10 +1134,6 @@ module.exports = function($window) {
 		insertNode(parent, element, nextSibling)
 
 		if (!maybeSetContentEditable(vnode)) {
-			if (vnode.text != null) {
-				if (vnode.text !== "") element.textContent = vnode.text
-				else vnode.children = [Vnode("#", undefined, undefined, vnode.text, undefined, undefined)]
-			}
 			if (vnode.children != null) {
 				var children = vnode.children
 				createNodes(element, children, 0, children.length, hooks, null, ns)
@@ -1286,7 +1287,6 @@ module.exports = function($window) {
 			var start = 0, oldStart = 0
 			if (!isOldKeyed) while (oldStart < old.length && old[oldStart] == null) oldStart++
 			if (!isKeyed) while (start < vnodes.length && vnodes[start] == null) start++
-			if (isKeyed === null && isOldKeyed == null) return // both lists are full of nulls
 			if (isOldKeyed !== isKeyed) {
 				removeNodes(parent, old, oldStart, old.length)
 				createNodes(parent, vnodes, start, vnodes.length, hooks, nextSibling, ns)
@@ -1465,21 +1465,10 @@ module.exports = function($window) {
 
 		if (vnode.tag === "textarea") {
 			if (vnode.attrs == null) vnode.attrs = {}
-			if (vnode.text != null) {
-				vnode.attrs.value = vnode.text //FIXME handle multiple children
-				vnode.text = undefined
-			}
 		}
 		updateAttrs(vnode, old.attrs, vnode.attrs, ns)
 		if (!maybeSetContentEditable(vnode)) {
-			if (old.text != null && vnode.text != null && vnode.text !== "") {
-				if (old.text.toString() !== vnode.text.toString()) old.dom.firstChild.nodeValue = vnode.text
-			}
-			else {
-				if (old.text != null) old.children = [Vnode("#", undefined, undefined, old.text, undefined, old.dom.firstChild)]
-				if (vnode.text != null) vnode.children = [Vnode("#", undefined, undefined, vnode.text, undefined, undefined)]
-				updateNodes(element, old.children, vnode.children, hooks, null, ns)
-			}
+			updateNodes(element, old.children, vnode.children, hooks, null, ns)
 		}
 	}
 	function updateComponent(parent, old, vnode, hooks, nextSibling, ns) {
@@ -1518,7 +1507,7 @@ module.exports = function($window) {
 	// takes a list of unique numbers (-1 is special and can
 	// occur multiple times) and returns an array with the indices
 	// of the items that are part of the longest increasing
-	// subsequece
+	// subsequence
 	var lisTemp = []
 	function makeLisIndices(a) {
 		var result = [0]
@@ -1622,7 +1611,7 @@ module.exports = function($window) {
 			var content = children[0].children
 			if (vnode.dom.innerHTML !== content) vnode.dom.innerHTML = content
 		}
-		else if (vnode.text != null || children != null && children.length !== 0) throw new Error("Child node of a contenteditable must be trusted")
+		else if (children != null && children.length !== 0) throw new Error("Child node of a contenteditable must be trusted.")
 		return true
 	}
 
@@ -1730,12 +1719,18 @@ module.exports = function($window) {
 
 	//attrs
 	function setAttrs(vnode, attrs, ns) {
+		// If you assign an input type that is not supported by IE 11 with an assignment expression, an error will occur.
+		//
+		// Also, the DOM does things to inputs based on the value, so it needs set first.
+		// See: https://github.com/MithrilJS/mithril.js/issues/2622
+		if (vnode.tag === "input" && attrs.type != null) vnode.dom.setAttribute("type", attrs.type)
+		var isFileInput = attrs != null && vnode.tag === "input" && attrs.type === "file"
 		for (var key in attrs) {
-			setAttr(vnode, key, null, attrs[key], ns)
+			setAttr(vnode, key, null, attrs[key], ns, isFileInput)
 		}
 	}
-	function setAttr(vnode, key, old, value, ns) {
-		if (key === "key" || key === "is" || value == null || isLifecycleMethod(key) || (old === value && !isFormAttribute(vnode, key)) && typeof value !== "object") return
+	function setAttr(vnode, key, old, value, ns, isFileInput) {
+		if (key === "key" || key === "is" || value == null || isLifecycleMethod(key) || (old === value && !isFormAttribute(vnode, key)) && typeof value !== "object" || key === "type" && vnode.tag === "input") return
 		if (key[0] === "o" && key[1] === "n") return updateEvent(vnode, key, value)
 		if (key.slice(0, 6) === "xlink:") vnode.dom.setAttributeNS("http://www.w3.org/1999/xlink", key.slice(6), value)
 		else if (key === "style") updateStyle(vnode.dom, old, value)
@@ -1744,16 +1739,18 @@ module.exports = function($window) {
 				// Only do the coercion if we're actually going to check the value.
 				/* eslint-disable no-implicit-coercion */
 				//setting input[value] to same value by typing on focused element moves cursor to end in Chrome
-				if ((vnode.tag === "input" || vnode.tag === "textarea") && vnode.dom.value === "" + value && vnode.dom === activeElement()) return
+				//setting input[type=file][value] to same value causes an error to be generated if it's non-empty
+				if ((vnode.tag === "input" || vnode.tag === "textarea") && vnode.dom.value === "" + value && (isFileInput || vnode.dom === activeElement())) return
 				//setting select[value] to same value while having select open blinks select dropdown in Chrome
 				if (vnode.tag === "select" && old !== null && vnode.dom.value === "" + value) return
 				//setting option[value] to same value while having select open blinks select dropdown in Chrome
 				if (vnode.tag === "option" && old !== null && vnode.dom.value === "" + value) return
+				//setting input[type=file][value] to different value is an error if it's non-empty
+				// Not ideal, but it at least works around the most common source of uncaught exceptions for now.
+				if (isFileInput && "" + value !== "") { console.error("`value` is read-only on file inputs!"); return }
 				/* eslint-enable no-implicit-coercion */
 			}
-			// If you assign an input type that is not supported by IE 11 with an assignment expression, an error will occur.
-			if (vnode.tag === "input" && key === "type") vnode.dom.setAttribute(key, value)
-			else vnode.dom[key] = value
+			vnode.dom[key] = value
 		} else {
 			if (typeof value === "boolean") {
 				if (value) vnode.dom.setAttribute(key, "")
@@ -1764,11 +1761,12 @@ module.exports = function($window) {
 	}
 	function removeAttr(vnode, key, old, ns) {
 		if (key === "key" || key === "is" || old == null || isLifecycleMethod(key)) return
-		if (key[0] === "o" && key[1] === "n" && !isLifecycleMethod(key)) updateEvent(vnode, key, undefined)
+		if (key[0] === "o" && key[1] === "n") updateEvent(vnode, key, undefined)
 		else if (key === "style") updateStyle(vnode.dom, old, null)
 		else if (
 			hasPropertyKey(vnode, key, ns)
 			&& key !== "className"
+			&& key !== "title" // creates "null" as title
 			&& !(key === "value" && (
 				vnode.tag === "option"
 				|| vnode.tag === "select" && vnode.dom.selectedIndex === -1 && vnode.dom === activeElement()
@@ -1796,9 +1794,18 @@ module.exports = function($window) {
 		if ("selectedIndex" in attrs) setAttr(vnode, "selectedIndex", null, attrs.selectedIndex, undefined)
 	}
 	function updateAttrs(vnode, old, attrs, ns) {
+		if (old && old === attrs) {
+			console.warn("Don't reuse attrs object, use new object for every redraw, this will throw in next major")
+		}
 		if (attrs != null) {
+			// If you assign an input type that is not supported by IE 11 with an assignment expression, an error will occur.
+			//
+			// Also, the DOM does things to inputs based on the value, so it needs set first.
+			// See: https://github.com/MithrilJS/mithril.js/issues/2622
+			if (vnode.tag === "input" && attrs.type != null) vnode.dom.setAttribute("type", attrs.type)
+			var isFileInput = vnode.tag === "input" && attrs.type === "file"
 			for (var key in attrs) {
-				setAttr(vnode, key, old && old[key], attrs[key], ns)
+				setAttr(vnode, key, old && old[key], attrs[key], ns, isFileInput)
 			}
 		}
 		var val
@@ -1901,6 +1908,7 @@ module.exports = function($window) {
 	//event
 	function updateEvent(vnode, key, value) {
 		if (vnode.events != null) {
+			vnode.events._ = currentRedraw
 			if (vnode.events[key] === value) return
 			if (value != null && (typeof value === "function" || typeof value === "object")) {
 				if (vnode.events[key] == null) vnode.dom.addEventListener(key.slice(2), vnode.events, false)
@@ -1952,27 +1960,34 @@ module.exports = function($window) {
 		return true
 	}
 
+	var currentDOM
+
 	return function(dom, vnodes, redraw) {
-		if (!dom) throw new TypeError("Ensure the DOM element being passed to m.route/m.mount/m.render is not undefined.")
+		if (!dom) throw new TypeError("DOM element being rendered to does not exist.")
+		if (currentDOM != null && dom.contains(currentDOM)) {
+			throw new TypeError("Node is currently being rendered to and thus is locked.")
+		}
+		var prevRedraw = currentRedraw
+		var prevDOM = currentDOM
 		var hooks = []
 		var active = activeElement()
 		var namespace = dom.namespaceURI
 
-		// First time rendering into a node clears it out
-		if (dom.vnodes == null) dom.textContent = ""
-
-		vnodes = Vnode.normalizeChildren(Array.isArray(vnodes) ? vnodes : [vnodes])
-		var prevRedraw = currentRedraw
+		currentDOM = dom
+		currentRedraw = typeof redraw === "function" ? redraw : undefined
 		try {
-			currentRedraw = typeof redraw === "function" ? redraw : undefined
+			// First time rendering into a node clears it out
+			if (dom.vnodes == null) dom.textContent = ""
+			vnodes = Vnode.normalizeChildren(Array.isArray(vnodes) ? vnodes : [vnodes])
 			updateNodes(dom, dom.vnodes, vnodes, hooks, null, namespace === "http://www.w3.org/1999/xhtml" ? undefined : namespace)
+			dom.vnodes = vnodes
+			// `document.activeElement` can return null: https://html.spec.whatwg.org/multipage/interaction.html#dom-document-activeelement
+			if (active != null && activeElement() !== active && typeof active.focus === "function") active.focus()
+			for (var i = 0; i < hooks.length; i++) hooks[i]()
 		} finally {
 			currentRedraw = prevRedraw
+			currentDOM = prevDOM
 		}
-		dom.vnodes = vnodes
-		// `document.activeElement` can return null: https://html.spec.whatwg.org/multipage/interaction.html#dom-document-activeelement
-		if (active != null && activeElement() !== active && typeof active.focus === "function") active.focus()
-		for (var i = 0; i < hooks.length; i++) hooks[i]()
 	}
 }
 
@@ -2019,7 +2034,11 @@ Vnode.normalizeChildren = function(input) {
 		// it, noticeably so.
 		for (var i = 1; i < input.length; i++) {
 			if ((input[i] != null && input[i].key != null) !== isKeyed) {
-				throw new TypeError("Vnodes must either always have keys or never have keys!")
+				throw new TypeError(
+					isKeyed && (input[i] != null || typeof input[i] === "boolean")
+						? "In fragments, vnodes must either all have keys or none have keys. You may wish to consider using an explicit keyed empty fragment, m.fragment({key: ...}), instead of a hole."
+						: "In fragments, vnodes must either all have keys or none have keys."
+				)
 			}
 		}
 		for (var i = 0; i < input.length; i++) {
@@ -2043,7 +2062,7 @@ module.exports = Vnode
 var PromisePolyfill = __webpack_require__(164)
 var mountRedraw = __webpack_require__(165)
 
-module.exports = __webpack_require__(775)(window, PromisePolyfill, mountRedraw.redraw)
+module.exports = __webpack_require__(775)(typeof window !== "undefined" ? window : null, PromisePolyfill, mountRedraw.redraw)
 
 
 /***/ }),
@@ -2055,6 +2074,7 @@ module.exports = __webpack_require__(775)(window, PromisePolyfill, mountRedraw.r
 
 
 var buildPathname = __webpack_require__(249)
+var hasOwn = __webpack_require__(188)
 
 module.exports = function($window, Promise, oncompletion) {
 	var callbackCount = 0
@@ -2120,7 +2140,7 @@ module.exports = function($window, Promise, oncompletion) {
 
 	function hasHeader(args, name) {
 		for (var key in args.headers) {
-			if ({}.hasOwnProperty.call(args.headers, key) && name.test(key)) return true
+			if (hasOwn.call(args.headers, key) && key.toLowerCase() === name) return true
 		}
 		return false
 	}
@@ -2129,10 +2149,10 @@ module.exports = function($window, Promise, oncompletion) {
 		request: makeRequest(function(url, args, resolve, reject) {
 			var method = args.method != null ? args.method.toUpperCase() : "GET"
 			var body = args.body
-			var assumeJSON = (args.serialize == null || args.serialize === JSON.serialize) && !(body instanceof $window.FormData)
+			var assumeJSON = (args.serialize == null || args.serialize === JSON.serialize) && !(body instanceof $window.FormData || body instanceof $window.URLSearchParams)
 			var responseType = args.responseType || (typeof args.extract === "function" ? "" : "json")
 
-			var xhr = new $window.XMLHttpRequest(), aborted = false
+			var xhr = new $window.XMLHttpRequest(), aborted = false, isTimeout = false
 			var original = xhr, replacedAbort
 			var abort = xhr.abort
 
@@ -2143,10 +2163,10 @@ module.exports = function($window, Promise, oncompletion) {
 
 			xhr.open(method, url, args.async !== false, typeof args.user === "string" ? args.user : undefined, typeof args.password === "string" ? args.password : undefined)
 
-			if (assumeJSON && body != null && !hasHeader(args, /^content-type$/i)) {
+			if (assumeJSON && body != null && !hasHeader(args, "content-type")) {
 				xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8")
 			}
-			if (typeof args.deserialize !== "function" && !hasHeader(args, /^accept$/i)) {
+			if (typeof args.deserialize !== "function" && !hasHeader(args, "accept")) {
 				xhr.setRequestHeader("Accept", "application/json, text/*")
 			}
 			if (args.withCredentials) xhr.withCredentials = args.withCredentials
@@ -2154,7 +2174,7 @@ module.exports = function($window, Promise, oncompletion) {
 			xhr.responseType = responseType
 
 			for (var key in args.headers) {
-				if ({}.hasOwnProperty.call(args.headers, key)) {
+				if (hasOwn.call(args.headers, key)) {
 					xhr.setRequestHeader(key, args.headers[key])
 				}
 			}
@@ -2176,7 +2196,11 @@ module.exports = function($window, Promise, oncompletion) {
 						if (responseType === "json") {
 							// For IE and Edge, which don't implement
 							// `responseType: "json"`.
-							if (!ev.target.responseType && typeof args.extract !== "function") response = JSON.parse(ev.target.responseText)
+							if (!ev.target.responseType && typeof args.extract !== "function") {
+								// Handle no-content which will not parse.
+								try { response = JSON.parse(ev.target.responseText) }
+								catch (e) { response = null }
+							}
 						} else if (!responseType || responseType === "text") {
 							// Only use this default if it's text. If a parsed
 							// document is needed on old IE and friends (all
@@ -2194,18 +2218,38 @@ module.exports = function($window, Promise, oncompletion) {
 						}
 						if (success) resolve(response)
 						else {
-							try { message = ev.target.responseText }
-							catch (e) { message = response }
-							var error = new Error(message)
-							error.code = ev.target.status
-							error.response = response
-							reject(error)
+							var completeErrorResponse = function() {
+								try { message = ev.target.responseText }
+								catch (e) { message = response }
+								var error = new Error(message)
+								error.code = ev.target.status
+								error.response = response
+								reject(error)
+							}
+
+							if (xhr.status === 0) {
+								// Use setTimeout to push this code block onto the event queue
+								// This allows `xhr.ontimeout` to run in the case that there is a timeout
+								// Without this setTimeout, `xhr.ontimeout` doesn't have a chance to reject
+								// as `xhr.onreadystatechange` will run before it
+								setTimeout(function() {
+									if (isTimeout) return
+									completeErrorResponse()
+								})
+							} else completeErrorResponse()
 						}
 					}
 					catch (e) {
 						reject(e)
 					}
 				}
+			}
+
+			xhr.ontimeout = function (ev) {
+				isTimeout = true
+				var error = new Error("Request timed out")
+				error.code = ev.target.status
+				reject(error)
 			}
 
 			if (typeof args.config === "function") {
@@ -2223,7 +2267,7 @@ module.exports = function($window, Promise, oncompletion) {
 
 			if (body == null) xhr.send()
 			else if (typeof args.serialize === "function") xhr.send(args.serialize(body))
-			else if (body instanceof $window.FormData) xhr.send(body)
+			else if (body instanceof $window.FormData || body instanceof $window.URLSearchParams) xhr.send(body)
 			else xhr.send(JSON.stringify(body))
 		}),
 		jsonp: makeRequest(function(url, args, resolve, reject) {
@@ -2258,7 +2302,93 @@ module.exports = function($window, Promise, oncompletion) {
 
 var mountRedraw = __webpack_require__(165)
 
-module.exports = __webpack_require__(223)(window, mountRedraw)
+module.exports = __webpack_require__(223)(typeof window !== "undefined" ? window : null, mountRedraw)
+
+
+/***/ }),
+
+/***/ 641:
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+"use strict";
+// This exists so I'm only saving it once.
+
+
+var hasOwn = __webpack_require__(188)
+
+module.exports = Object.assign || function(target, source) {
+	for (var key in source) {
+		if (hasOwn.call(source, key)) target[key] = source[key]
+	}
+}
+
+
+/***/ }),
+
+/***/ 542:
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+"use strict";
+
+
+// Note: this is mildly perf-sensitive.
+//
+// It does *not* use `delete` - dynamic `delete`s usually cause objects to bail
+// out into dictionary mode and just generally cause a bunch of optimization
+// issues within engines.
+//
+// Ideally, I would've preferred to do this, if it weren't for the optimization
+// issues:
+//
+// ```js
+// const hasOwn = require("./hasOwn")
+// const magic = [
+//     "key", "oninit", "oncreate", "onbeforeupdate", "onupdate",
+//     "onbeforeremove", "onremove",
+// ]
+// module.exports = (attrs, extras) => {
+//     const result = Object.assign(Object.create(null), attrs)
+//     for (const key of magic) delete result[key]
+//     if (extras != null) for (const key of extras) delete result[key]
+//     return result
+// }
+// ```
+
+var hasOwn = __webpack_require__(188)
+// Words in RegExp literals are sometimes mangled incorrectly by the internal bundler, so use RegExp().
+var magic = new RegExp("^(?:key|oninit|oncreate|onbeforeupdate|onupdate|onbeforeremove|onremove)$")
+
+module.exports = function(attrs, extras) {
+	var result = {}
+
+	if (extras != null) {
+		for (var key in attrs) {
+			if (hasOwn.call(attrs, key) && !magic.test(key) && extras.indexOf(key) < 0) {
+				result[key] = attrs[key]
+			}
+		}
+	} else {
+		for (var key in attrs) {
+			if (hasOwn.call(attrs, key) && !magic.test(key)) {
+				result[key] = attrs[key]
+			}
+		}
+	}
+
+	return result
+}
+
+
+/***/ }),
+
+/***/ 188:
+/***/ (function(module) {
+
+"use strict";
+// This exists so I'm only saving it once.
+
+
+module.exports = {}.hasOwnProperty
 
 
 /***/ }),
@@ -2291,7 +2421,7 @@ var y = d * 365.25;
  * @api public
  */
 
-module.exports = function(val, options) {
+module.exports = function (val, options) {
   options = options || {};
   var type = typeof val;
   if (type === 'string' && val.length > 0) {
@@ -2549,7 +2679,6 @@ var analog_clock_path_default = /*#__PURE__*/__webpack_require__.n(analog_clock_
       this.oldAttrs = old.attrs;
       this.attrsChanged = true;
     }
-
     return;
   },
   onupdate: function onupdate(vnode) {
@@ -2563,13 +2692,15 @@ var analog_clock_path_default = /*#__PURE__*/__webpack_require__.n(analog_clock_
       x: this.oldAttrs["x"] - vnode.attrs["x"],
       y: this.oldAttrs["y"] - vnode.attrs["y"]
     };
-    return mithril_default()("text", vnode.attrs, this.oldAttrs ? [vnode.children, // eslint-disable-next-line mithril/jsx-key
+    return mithril_default()("text", vnode.attrs, this.oldAttrs ? [vnode.children,
+    // eslint-disable-next-line mithril/jsx-key
     mithril_default()("animateMotion", {
       id: vnode.key,
       begin: "indefinite",
       dur: "500ms",
       path: "M ".concat(relOldPoint.x, " ").concat(relOldPoint.y) + "L ".concat(relOldPoint.x, " ").concat(relOldPoint.y)
-    }), // eslint-disable-next-line mithril/jsx-key
+    }),
+    // eslint-disable-next-line mithril/jsx-key
     mithril_default()("animateMotion", {
       begin: vnode.key + ".end",
       dur: "500ms",
@@ -2581,8 +2712,10 @@ var analog_clock_path_default = /*#__PURE__*/__webpack_require__.n(analog_clock_
   }
 });
 ;// CONCATENATED MODULE: ./src/analog-clock.js
-function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
-
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+function _extends() { _extends = Object.assign ? Object.assign.bind() : function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
 // eslint-disable-next-line no-unused-vars
 
 
@@ -2633,44 +2766,40 @@ var clock = {
   view: function view() {
     // Clock scaling
     var relevantTimeFrame = model.manualTotalTime || model.originalTime || clock.totalTime;
-
     if (relevantTimeFrame) {
       Object.assign(clock, timeSteps.find(function (step) {
         return step.totalTime >= relevantTimeFrame;
       }));
       if (clock.totalTime === Infinity) clock.totalTime = Math.ceil(relevantTimeFrame / HOUR) * HOUR;
     }
-
     var isZooming = false;
-
     if (clock.totalTime !== clock.previousTotalTime) {
       isZooming = true;
       clock.previousTotalTime = clock.totalTime;
-    } // Define sources
+    }
 
-
+    // Define sources
     var originalTime = model.intermediateDigitalOriginalTime || model.originalTime || model.intermediateOriginalTime || 0;
     var timeLeft = model.timeLeft || 0;
-    if (timeLeft === clock.totalTime) timeLeft--; // Prepare ticks and labels
+    if (timeLeft === clock.totalTime) timeLeft--;
 
+    // Prepare ticks and labels
     var ticks = [];
     var interactiveSegments = [];
     var interactiveSegmentPrototype = "\n      M 0 ".concat(-clockRadius, "\n      ").concat(drawArc(clockRadius, clock.tickFrequency / clock.totalTime), "\n      ").concat(drawArc(innerClockRadius, clock.tickFrequency / clock.totalTime, true), "\n    ");
-
     for (var time = clock.tickFrequency; time <= clock.totalTime; time += clock.tickFrequency) {
       var rotation = -time * (360 / clock.totalTime);
       var majorTick = !(time % clock.majorTickFrequency);
       ticks.push(mithril_default()((analog_clock_path_default()), {
-        "class": "tick ".concat(majorTick ? "major" : ""),
+        class: "tick ".concat(majorTick ? "major" : ""),
         d: "M 0 ".concat(-clockRadius) + "v ".concat(!majorTick && time / clock.labelUnit % 5 ? minorTickSize : majorTickSize),
         style: "transform:rotate(".concat(rotation, "deg)"),
         key: "line_" + time,
         "data-time": time
       }));
-
       if (model.state === STATE.READY && time !== 0) {
         interactiveSegments.push(mithril_default()("path", {
-          "class": "interactive-segment",
+          class: "interactive-segment",
           d: interactiveSegmentPrototype,
           transform: "rotate(".concat(-(time - clock.tickFrequency / 2) * (360 / clock.totalTime), ")"),
           onmouseenter: clock.setIntermediateTime,
@@ -2679,11 +2808,9 @@ var clock = {
           "data-time": time
         }));
       }
-
       if (!majorTick) {
         continue;
       }
-
       var labelText = time === this.totalTime && model.state !== STATE.READY ? "0" : (time / clock.labelUnit).toString();
       var textPosition = {
         x: -(clockRadius - majorTickSize - labelFontSize * labelText.length * 0.3 - 3) * Math.sin(-rotation / 360 * (2 * Math.PI)),
@@ -2696,21 +2823,21 @@ var clock = {
         "data-time": time || clock.totalTime,
         "data-totaltime": clock.totalTime
       }, model.state === STATE.READY ? {
-        "class": "interactive",
+        class: "interactive",
         onmouseenter: clock.setIntermediateTime,
         onmouseleave: clock.resetIntermediateTime,
         onclick: clock.setTime
       } : {}), labelText));
     }
-
     var endAnimationAttributes = {
       dur: "2000ms",
       begin: "indefinite",
       calcMode: "spline",
       keyTimes: model.originalTime <= clock.totalTime && "0;".concat(0.4 + model.originalTime / (clock.totalTime * 2), ";1"),
       keySplines: ".5 0 1 1; 0 0 .5 1"
-    }; // Put it all together and draw fills
+    };
 
+    // Put it all together and draw fills
     return mithril_default()("div", {
       id: "analog-clock",
       ontouchstart: clock.touching,
@@ -2719,41 +2846,42 @@ var clock = {
     }, mithril_default()("svg", {
       viewBox: "".concat(-clockRadius, " ").concat(-clockRadius, " ").concat(clockRadius * 2, " ").concat(clockRadius * 2)
     }, mithril_default()("circle", {
-      "class": "background",
+      class: "background",
       cx: 0,
       cy: 0,
       r: clockRadius
     }), mithril_default()("g", {
-      "class": "originalTime" + (model.intermediateOriginalTime ? " intermediate" : "") + (isZooming ? " zooming" : "")
+      class: "originalTime" + (model.intermediateOriginalTime ? " intermediate" : "") + (isZooming ? " zooming" : "")
     }, mithril_default()("circle", {
       cx: 0,
       cy: 0,
       r: clockRadius
     }, mithril_default()("animate", _extends({
-      "class": "animation--end"
+      class: "animation--end"
     }, endAnimationAttributes, {
       attributeName: "fill",
       values: "transparent;transparent;#ffcece"
     }))), mithril_default()("circle", {
-      "class": "negative",
+      class: "negative",
       cx: 0,
       cy: 0,
       r: clockRadius / 2,
       "stroke-width": clockRadius,
       "stroke-dasharray": clockRadius * Math.PI,
-      "stroke-dashoffset": (originalTime < clock.totalTime ? originalTime / clock.totalTime : 1 - Number.EPSILON) * // –ε fights layout bug in Chrome
+      "stroke-dashoffset": (originalTime < clock.totalTime ? originalTime / clock.totalTime : 1 - Number.EPSILON) *
+      // –ε fights layout bug in Chrome
       clockRadius * Math.PI
     })), originalTime > clock.totalTime && mithril_default()((analog_clock_path_default()), {
-      "class": "overshoot-indicator",
+      class: "overshoot-indicator",
       d: "M 0 ".concat(-clockRadius) + "v ".concat(minorTickSize + 2) + "A ".concat(innerClockRadius - 1, " ").concat(innerClockRadius - 1, " 0 0 1 ") + polarToCartesian(innerClockRadius - 1, -minorTickSize / (clockRadius * 2 * Math.PI)) + // First arrow
       "L ".concat(polarToCartesian(clockRadius - minorTickSize / 2, -(minorTickSize * 0.5) / (clockRadius * 2 * Math.PI))) + "L ".concat(polarToCartesian(clockRadius, -minorTickSize / (clockRadius * 2 * Math.PI))) + "A ".concat(clockRadius, " ").concat(clockRadius, " 0 0 0 0 ").concat(-clockRadius) + "Z" + "M " + polarToCartesian(clockRadius, -minorTickSize * 1.5 / (clockRadius * 2 * Math.PI)) + // Second arrow
       "L ".concat(polarToCartesian(clockRadius - minorTickSize / 2, -minorTickSize * 1.0 / (clockRadius * 2 * Math.PI))) + "L ".concat(polarToCartesian(innerClockRadius - 1, -minorTickSize * 1.5 / (clockRadius * 2 * Math.PI))) + "A ".concat(innerClockRadius - 1, " ").concat(innerClockRadius - 1, " 0 0 1 ") + polarToCartesian(innerClockRadius - 1, -minorTickSize * 2.0 / (clockRadius * 2 * Math.PI)) + // Third arrow
       "L ".concat(polarToCartesian(clockRadius - minorTickSize / 2, -minorTickSize * 1.5 / (clockRadius * 2 * Math.PI))) + "L ".concat(polarToCartesian(clockRadius, -minorTickSize * 2.0 / (clockRadius * 2 * Math.PI))) + "A ".concat(clockRadius, " ").concat(clockRadius, " 0 0 0 ") + polarToCartesian(clockRadius, -minorTickSize * 1.0 / (clockRadius * 2 * Math.PI)) + "Z"
     }), mithril_default()("path", {
-      "class": "timeLeft",
+      class: "timeLeft",
       d: "\n              M 0 ".concat(-clockRadius, "\n              ").concat(drawArc(clockRadius, timeLeft / clock.totalTime), "\n              L 0 0\n            ")
     }, mithril_default()("animate", {
-      "class": "animation--running-ready animation--paused-ready",
+      class: "animation--running-ready animation--paused-ready",
       begin: "indefinite",
       dur: "500ms",
       attributeName: "fill",
@@ -2761,7 +2889,7 @@ var clock = {
       to: "#ffcece",
       fill: "freeze"
     }), mithril_default()("animate", {
-      "class": "animation--ready-running",
+      class: "animation--ready-running",
       begin: "indefinite",
       dur: "500ms",
       attributeName: "fill",
@@ -2769,33 +2897,33 @@ var clock = {
       from: "#ffcece",
       fill: "freeze"
     })), mithril_default()("circle", {
-      "class": "end-animation",
+      class: "end-animation",
       cx: 0,
       cy: 0,
       r: clockRadius / 2,
       "stroke-width": clockRadius
     }, mithril_default()("animate", _extends({
-      "class": "animation--end"
+      class: "animation--end"
     }, endAnimationAttributes, {
       attributeName: "stroke-dasharray",
       values: "0 ".concat(clockRadius * Math.PI, ";") + "".concat(clockRadius * Math.PI, " 0;") + "".concat(clockRadius * Math.PI, " ").concat(clockRadius * Math.PI)
     })), mithril_default()("animate", _extends({
-      "class": "animation--end"
+      class: "animation--end"
     }, endAnimationAttributes, {
       attributeName: "stroke-dashoffset",
       values: "0;" + "0;" + (originalTime / clock.totalTime - 1) * clockRadius * Math.PI
     })), mithril_default()("animate", _extends({
-      "class": "animation--end"
+      class: "animation--end"
     }, endAnimationAttributes, {
       attributeName: "stroke",
       values: "#ff6161;#ff6161;#ffcece"
     }))), mithril_default()("circle", {
-      "class": "inner-negative",
+      class: "inner-negative",
       cx: 0,
       cy: 0,
       r: innerClockRadius
     }, mithril_default()("animate", {
-      "class": "animation--running-paused animation--running-ready",
+      class: "animation--running-paused animation--running-ready",
       begin: "indefinite",
       dur: "500ms",
       calcMode: "spline",
@@ -2805,7 +2933,7 @@ var clock = {
       values: "0;" + innerClockRadius,
       fill: "freeze"
     }), mithril_default()("animate", {
-      "class": "animation--ready-running animation--paused-running",
+      class: "animation--ready-running animation--paused-running",
       begin: "indefinite",
       dur: "500ms",
       calcMode: "spline",
@@ -2815,24 +2943,24 @@ var clock = {
       values: innerClockRadius + ";0",
       fill: "freeze"
     }), mithril_default()("animate", _extends({
-      "class": "animation--end"
+      class: "animation--end"
     }, endAnimationAttributes, {
       attributeName: "r",
       values: "0;0;" + innerClockRadius,
       fill: "freeze"
     }))), mithril_default()("circle", {
-      "class": "middleDot",
+      class: "middleDot",
       cx: 0,
       cy: 0,
       r: 1
     }), ticks, model.state === STATE.READY && interactiveSegments, model.state !== STATE.READY && mithril_default()("circle", {
-      "class": "disabled-click-overlay",
+      class: "disabled-click-overlay",
       cx: 0,
       cy: 0,
       r: clockRadius,
       onclick: model.clickOnDisabled
     })), model.state === STATE.READY && mithril_default()("div", {
-      "class": "range-control"
+      class: "range-control"
     }, mithril_default()("button", {
       id: "expand",
       title: "Expand visible time range",
@@ -2843,7 +2971,7 @@ var clock = {
       }
     }, mithril_default()("svg", {
       viewBox: "0 0 32 32",
-      "class": "icon"
+      class: "icon"
     }, mithril_default()("path", {
       d: "M18 9v14l12-7zm-4 0L2 16l12 7z"
     }))), mithril_default()("button", {
@@ -2856,7 +2984,7 @@ var clock = {
       }
     }, mithril_default()("svg", {
       viewBox: "0 0 32 32",
-      "class": "icon"
+      class: "icon"
     }, mithril_default()("path", {
       d: "M3 9v14l12-7zm26 0l-12 7 12 7z"
     })))));
@@ -2885,7 +3013,6 @@ var clock = {
     var touch = event.touches[0];
     var element = document.elementFromPoint(touch.pageX, touch.pageY);
     var time = element.dataset.time;
-
     if (time) {
       model.setIntermediateDigitalTime(parseInt(time));
     }
@@ -2894,32 +3021,20 @@ var clock = {
     if (model.intermediateDigitalOriginalTime) model.setTime(model.intermediateDigitalOriginalTime);
   },
   animateElements: function animateElements(oldState) {
-    var _iteratorNormalCompletion = true;
-    var _didIteratorError = false;
-    var _iteratorError = undefined;
-
+    var _iterator = _createForOfIteratorHelper(document.getElementsByClassName("animation--".concat(oldState, "-").concat(model.state))),
+      _step;
     try {
-      for (var _iterator = document.getElementsByClassName("animation--".concat(oldState, "-").concat(model.state))[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      for (_iterator.s(); !(_step = _iterator.n()).done;) {
         var el = _step.value;
         el.beginElement();
       }
     } catch (err) {
-      _didIteratorError = true;
-      _iteratorError = err;
+      _iterator.e(err);
     } finally {
-      try {
-        if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-          _iterator["return"]();
-        }
-      } finally {
-        if (_didIteratorError) {
-          throw _iteratorError;
-        }
-      }
+      _iterator.f();
     }
   }
 };
-
 var polarToCartesian = function polarToCartesian(radius, angle) {
   var rad = angle * (2 * Math.PI);
   return {
@@ -2930,19 +3045,16 @@ var polarToCartesian = function polarToCartesian(radius, angle) {
     }
   };
 };
-
 var drawArc = function drawArc(radius, angle, inner) {
   var c = polarToCartesian(radius, angle);
   return "\n      ".concat(inner ? "L ".concat(c.x, " ").concat(c.y) : "", "\n      A ").concat(radius, " ").concat(radius, " 0 ").concat(c.x < 0 ? 0 : 1, " \n      ").concat(inner ? 1 : 0, " ").concat(inner ? 0 : c.x, " ").concat(inner ? -radius : c.y, "\n    ");
 };
-
 /* harmony default export */ var analog_clock = (clock);
 // EXTERNAL MODULE: ./node_modules/ms/index.js
 var ms = __webpack_require__(824);
 var ms_default = /*#__PURE__*/__webpack_require__.n(ms);
 ;// CONCATENATED MODULE: ./src/digital-clock.js
-function digital_clock_extends() { digital_clock_extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return digital_clock_extends.apply(this, arguments); }
-
+function digital_clock_extends() { digital_clock_extends = Object.assign ? Object.assign.bind() : function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return digital_clock_extends.apply(this, arguments); }
 // eslint-disable-next-line no-unused-vars
 
 
@@ -2953,13 +3065,11 @@ var input = {
   view: function view() {
     var time = model.state === STATE.READY ? model.originalTime : model.timeLeft;
     var text, ghost;
-
     if (input.userInput === null) {
       var _this$formatTime = this.formatTime(time),
-          txt = _this$formatTime.text,
-          hours = _this$formatTime.hours,
-          minutes = _this$formatTime.minutes;
-
+        txt = _this$formatTime.text,
+        hours = _this$formatTime.hours,
+        minutes = _this$formatTime.minutes;
       text = txt;
       var ghostHours = hours ? "" : "0";
       var ghostMinutes = time ? hours ? " " : minutes >= 10 ? ":" : ":0" : ":00";
@@ -2969,7 +3079,6 @@ var input = {
       text = input.userInput;
       ghost = "";
       var inputAnalysis = new RegExp(/^(\d{0,2}:)?(\d{1,2}):\d{0,2}$/).exec(text);
-
       if (inputAnalysis) {
         if (inputAnalysis[1]) {
           if (inputAnalysis[1].length === 0) ghost += "0:";
@@ -2977,32 +3086,26 @@ var input = {
         } else {
           ghost += "0:";
         }
-
         if (inputAnalysis[2]) {
           if (ghost && inputAnalysis[2].length === 1) ghost += "0";
         }
       }
     }
-
     if (time < 0) {
       text = "";
     }
-
     var textWidth = time < 10 * 60000 ? 4.4 : time < 60 * 60000 ? 5.3 : 6.8;
     return mithril_default()("div", {
       id: "digital-clock"
     }, mithril_default()("form", digital_clock_extends({
       onsubmit: function onsubmit(e) {
         e.preventDefault();
-
         if (model.intermediateOriginalTime) {
           model.originalTime = model.intermediateOriginalTime;
         }
-
         if (model.intermediateDigitalOriginalTime) {
           model.originalTime = model.intermediateDigitalOriginalTime;
         }
-
         model.start();
         input.userInput = null;
       }
@@ -3024,9 +3127,9 @@ var input = {
       inputmode: "decimal",
       disabled: model.state !== STATE.READY
     }), mithril_default()("div", {
-      "class": "ghost"
+      class: "ghost"
     }, ghost, mithril_default()("span", {
-      "class": "invisible"
+      class: "invisible"
     }, text)), mithril_default()("datalist", {
       id: "presets"
     }, mithril_default()("option", {
@@ -3081,16 +3184,13 @@ var input = {
     model.setIntermediateDigitalTime(milliseconds);
   }
 };
-
 function parseInput(input) {
   var result;
-
   try {
     result = ms_default()(input);
   } catch (e) {
     return null;
   }
-
   if (result < 0) result = null;
   if (result < 1000) result *= 60000;
   if (result) return result;
@@ -3104,7 +3204,6 @@ function parseInput(input) {
   if (regResult) result = parseInt(regResult[1]) * 1000;
   return result;
 }
-
 /* harmony default export */ var digital_clock = (input);
 // EXTERNAL MODULE: ./assets/favicon.svg
 var favicon = __webpack_require__(142);
@@ -3118,6 +3217,9 @@ var favicon_default = /*#__PURE__*/__webpack_require__.n(favicon);
 ;// CONCATENATED MODULE: ./assets/bell/michael.mp3
 /* harmony default export */ var michael = (__webpack_require__.p + "audio/michael.d56d9c277da1cefa464fe2da24025f1b.mp3");
 ;// CONCATENATED MODULE: ./src/model.js
+function model_createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = model_unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+function model_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return model_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return model_arrayLikeToArray(o, minLen); }
+function model_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 // eslint-disable-next-line no-unused-vars
 
 
@@ -3195,13 +3297,10 @@ var model = {
   loadSettingsFromStore: function loadSettingsFromStore() {
     model.originalTime = parseInt(localStorage.getItem(STORED_ITEMS.ORIGINAL_TIME));
     var storedState = localStorage.getItem(STORED_ITEMS.STATE);
-
     if (storedState) {
       setState(storedState);
-
       if (storedState === STATE.RUNNING) {
         model.endTime = parseInt(localStorage.getItem(STORED_ITEMS.END_TIME));
-
         if (model.endTime > Date.now()) {
           model.timeLeft = model.endTime - Date.now();
         } else {
@@ -3211,7 +3310,6 @@ var model = {
     }
   }
 };
-
 function run() {
   setState(STATE.RUNNING);
   model.endTime = Date.now() + model.timeLeft;
@@ -3220,42 +3318,28 @@ function run() {
   document.getElementById("time-input").blur();
   model.timerEnd = setTimeout(end, model.timeLeft);
 }
-
 function countdown() {
   model.timeLeft = model.endTime - Date.now();
   mithril_default().redraw();
   model.timerCountdown = setTimeout(countdown, model.timeLeft % 1000 || 1000);
 }
-
 function end() {
   new Audio(bells[Math.floor(Math.random() * bells.length)]).play();
   model.timeLeft = 0;
   model.reset();
   mithril_default().redraw();
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
-
+  var _iterator = model_createForOfIteratorHelper(document.getElementsByClassName("animation--end")),
+    _step;
   try {
-    for (var _iterator = document.getElementsByClassName("animation--end")[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
       var el = _step.value;
       el.beginElement();
     }
   } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
+    _iterator.e(err);
   } finally {
-    try {
-      if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-        _iterator["return"]();
-      }
-    } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
-      }
-    }
+    _iterator.f();
   }
-
   if (Notification.permission === "granted") {
     new Notification("🕛", {
       body: digital_clock.formatTime(model.originalTime).text,
@@ -3266,19 +3350,16 @@ function end() {
     });
   }
 }
-
 function clearTimeouts() {
   clearTimeout(model.timerEnd);
   clearTimeout(model.timerCountdown);
 }
-
 function setState(state) {
   var oldState = model.state;
   model.state = state;
   analog_clock.animateElements(oldState);
   localStorage.setItem(STORED_ITEMS.STATE, state);
 }
-
 
 ;// CONCATENATED MODULE: ./src/controls.js
 // eslint-disable-next-line no-unused-vars
@@ -3295,7 +3376,7 @@ function setState(state) {
       onclick: model.state === STATE.PAUSED ? model.resume : model.start,
       disabled: model.state === STATE.RUNNING || !model.originalTime && !model.intermediateDigitalOriginalTime
     }, mithril_default()("svg", {
-      "class": "icon",
+      class: "icon",
       viewBox: "0 0 32 32"
     }, mithril_default()("path", {
       d: "M7 4l20 12-20 12z"
@@ -3305,7 +3386,7 @@ function setState(state) {
       onclick: model.pause,
       disabled: model.state !== STATE.RUNNING
     }, mithril_default()("svg", {
-      "class": "icon",
+      class: "icon",
       viewBox: "0 0 32 32"
     }, mithril_default()("path", {
       d: "M4 4h10v24h-10zM18 4h10v24h-10z"
@@ -3318,19 +3399,17 @@ function setState(state) {
         if (e.key === " ") e.preventDefault();
       }
     }, mithril_default()("svg", {
-      "class": "icon",
+      class: "icon",
       viewBox: "0 0 32 32"
     }, mithril_default()("path", {
       d: "M16 2c-4.418 0-8.418 1.791-11.313 4.687l-4.686-4.687v12h12l-4.485-4.485c2.172-2.172 5.172-3.515 8.485-3.515 6.627 0 12 5.373 12 12 0 3.584-1.572 6.801-4.063 9l2.646 3c3.322-2.932 5.417-7.221 5.417-12 0-8.837-7.163-16-16-16z"
     }))));
   }
 });
-
 function timeStep(time) {
   if (time <= 60 * 1000 && time > 0) return 1000;
   return 60 * 1000;
 }
-
 onkeyup = function onkeyup(e) {
   if (e.key === " ") {
     if (model.state === STATE.READY) {
@@ -3339,14 +3418,12 @@ onkeyup = function onkeyup(e) {
       mithril_default().redraw();
       return;
     }
-
     if (model.state === STATE.RUNNING) {
       document.getElementById("pause").blur();
       model.pause();
       mithril_default().redraw();
       return;
     }
-
     if (model.state === STATE.PAUSED) {
       document.getElementById("run").blur();
       model.resume();
@@ -3354,7 +3431,6 @@ onkeyup = function onkeyup(e) {
       return;
     }
   }
-
   if (e.key === "Escape") {
     document.getElementById("reset").blur();
     model.reset();
@@ -3362,13 +3438,11 @@ onkeyup = function onkeyup(e) {
     return;
   }
 };
-
 onkeydown = function onkeydown(e) {
   if (e.key === "Escape" || e.key === "+") {
     document.getElementById("reset").focus();
     return;
   }
-
   if (model.state === STATE.READY) {
     if (e.key === "ArrowUp") {
       if (model.intermediateOriginalTime) {
@@ -3376,11 +3450,9 @@ onkeydown = function onkeydown(e) {
       } else {
         if (model.originalTime === null) model.originalTime = 15 * 60 * 1000;else model.originalTime += timeStep(model.originalTime);
       }
-
       mithril_default().redraw();
       return;
     }
-
     if (e.key === "ArrowDown" || e.key === "-") {
       if (model.intermediateOriginalTime) {
         model.intermediateOriginalTime -= timeStep(--model.intermediateOriginalTime);
@@ -3389,7 +3461,6 @@ onkeydown = function onkeydown(e) {
         model.originalTime -= timeStep(--model.originalTime);
         if (model.originalTime < 0) model.originalTime = 0;
       }
-
       mithril_default().redraw();
       return;
     }
@@ -3408,11 +3479,9 @@ var LAYOUT = {
   WIDE: "wide",
   SQUARE: "square"
 };
-
 window.onresize = function () {
   mithril_default().redraw();
 };
-
 var layout = {
   initialRendering: true,
   onupdate: function onupdate() {
@@ -3433,10 +3502,10 @@ var layout = {
     var title = "Timer";
     document.title = model.state !== STATE.RUNNING ? title : title + " • " + digital_clock.formatTime(model.timeLeft).text;
     return mithril_default()("div", {
-      "class": "layout " + "layout--".concat(layout, " ") + "state--".concat(model.state, " ") + (model.highlightOnDisabledClick ? "click-on-disabled-flash " : "") + (this.initialRendering ? "initial" : ""),
+      class: "layout " + "layout--".concat(layout, " ") + "state--".concat(model.state, " ") + (model.highlightOnDisabledClick ? "click-on-disabled-flash " : "") + (this.initialRendering ? "initial" : ""),
       style: "height:".concat(doc.clientHeight, "px")
     }, mithril_default()(analog_clock, null), mithril_default()("div", {
-      "class": "controls-container"
+      class: "controls-container"
     }, mithril_default()(digital_clock, null), mithril_default()(controls, null)));
   }
 };
