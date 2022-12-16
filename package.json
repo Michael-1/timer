@@ -35,5 +35,5 @@
     "webpack-dev-server": "^4.7.3",
     "webpack-merge": "^4.2.2"
   },
-  "browserslist": "cover 99%"
+  "browserslist": "cover 96%"
 }
