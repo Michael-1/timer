@@ -30,7 +30,7 @@
     box-shadow: none;
 
     &::-webkit-calendar-picker-indicator {
-      display: none;
+      display: none !important;
     }
     &:focus {
       outline: none;

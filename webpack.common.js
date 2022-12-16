@@ -9,21 +9,21 @@ module.exports = {
         test: /\.js$/,
         exclude: /\/node_modules\//,
         use: {
-          loader: "babel-loader"
-        }
+          loader: "babel-loader",
+        },
       },
       {
         test: /\.s?css$/,
         exclude: /\/node_modules\//,
-        use: [MiniCssExtractPlugin.loader, "css-loader", "sass-loader"]
+        use: [MiniCssExtractPlugin.loader, "css-loader", "sass-loader"],
       },
       {
         test: /\.(ogg|mp3)$/,
         loader: "file-loader",
         options: {
           name: "[name].[hash].[ext]",
-          outputPath: "audio"
-        }
+          outputPath: "audio",
+        },
       },
       {
         test: /\.(png|svg)$/,
@@ -31,9 +31,9 @@ module.exports = {
         options: {
           name: "[name].[hash].[ext]",
           outputPath: "img",
-          esModule: false
-        }
-      }
-    ]
-  }
+          esModule: false,
+        },
+      },
+    ],
+  },
 };
