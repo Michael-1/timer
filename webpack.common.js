@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-const MiniCssExtractPlugin = require("mini-css-extract-plugin").default;
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
   plugins: [new MiniCssExtractPlugin()],
